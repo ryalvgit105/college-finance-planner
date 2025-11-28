@@ -1,0 +1,92 @@
+const Milestone = require('../models/Milestone');
+
+// @desc    Create a milestone
+// @route   POST /api/milestones
+// @access  Public (will add auth later)
+exports.createMilestone = async (req, res) => {
+    try {
+        const { title, date, description, expectedCost, relatedGoalId } = req.body;
+
+        const milestone = await Milestone.create({
+            title,
+            date,
+            description,
+            expectedCost,
+            relatedGoalId
+        });
+
+        res.status(201).json({
+            success: true,
+            data: milestone
+        });
+    } catch (error) {
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => ({
+                field: err.path,
+                message: err.message
+            }));
+
+            return res.status(400).json({
+                success: false,
+                errors
+            });
+        }
+
+        // Handle other errors
+        res.status(500).json({
+            success: false,
+            message: 'Server error while creating milestone',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Get milestones with optional month filtering
+// @route   GET /api/milestones?month=YYYY-MM
+// @access  Public (will add auth later)
+exports.getMilestones = async (req, res) => {
+    try {
+        const { month } = req.query;
+        let query = {};
+
+        // If month parameter is provided, filter by that month
+        if (month) {
+            // Parse month (format: YYYY-MM)
+            const [year, monthNum] = month.split('-');
+
+            if (!year || !monthNum) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid month format. Use YYYY-MM (e.g., 2025-12)'
+                });
+            }
+
+            // Create date range for the entire month
+            const startDate = new Date(year, monthNum - 1, 1);
+            const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
+
+            query.date = {
+                $gte: startDate,
+                $lte: endDate
+            };
+        }
+
+        const milestones = await Milestone.find(query)
+            .populate('relatedGoalId', 'goalName targetAmount')
+            .sort({ date: 1 });
+
+        res.status(200).json({
+            success: true,
+            count: milestones.length,
+            month: month || 'all',
+            data: milestones
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching milestones',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

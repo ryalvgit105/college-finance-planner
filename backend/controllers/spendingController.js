@@ -1,0 +1,115 @@
+const Spending = require('../models/Spending');
+
+// @desc    Log a new expense
+// @route   POST /api/spending
+// @access  Public (will add auth later)
+exports.logSpending = async (req, res) => {
+    try {
+        const { date, category, amount, notes } = req.body;
+
+        const spending = await Spending.create({
+            date,
+            category,
+            amount,
+            notes
+        });
+
+        res.status(201).json({
+            success: true,
+            data: spending
+        });
+    } catch (error) {
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => ({
+                field: err.path,
+                message: err.message
+            }));
+
+            return res.status(400).json({
+                success: false,
+                errors
+            });
+        }
+
+        // Handle other errors
+        res.status(500).json({
+            success: false,
+            message: 'Server error while logging spending',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Get weekly spending breakdown
+// @route   GET /api/spending/week?start=YYYY-MM-DD
+// @access  Public (will add auth later)
+exports.getWeeklyBreakdown = async (req, res) => {
+    try {
+        const { start } = req.query;
+
+        if (!start) {
+            return res.status(400).json({
+                success: false,
+                message: 'Start date is required (format: YYYY-MM-DD)'
+            });
+        }
+
+        // Parse start date
+        const startDate = new Date(start);
+        startDate.setHours(0, 0, 0, 0);
+
+        // Calculate end date (6 days later)
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+
+        // Fetch all spending records for the week
+        const spendingRecords = await Spending.find({
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        }).sort({ date: 1 });
+
+        // Group by day and calculate totals
+        const dailyTotals = {};
+        let weeklyTotal = 0;
+
+        spendingRecords.forEach(record => {
+            const dateKey = record.date.toISOString().split('T')[0];
+            if (!dailyTotals[dateKey]) {
+                dailyTotals[dateKey] = 0;
+            }
+            dailyTotals[dateKey] += record.amount;
+            weeklyTotal += record.amount;
+        });
+
+        // Create array of all 7 days with totals (0 if no spending)
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(currentDate.getDate() + i);
+            const dateKey = currentDate.toISOString().split('T')[0];
+
+            days.push({
+                date: dateKey,
+                total: dailyTotals[dateKey] || 0
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            days,
+            weeklyTotal: Math.round(weeklyTotal * 100) / 100
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching weekly breakdown',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
