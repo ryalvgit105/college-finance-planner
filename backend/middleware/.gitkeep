@@ -1,0 +1,2 @@
+# This file ensures the middleware directory is tracked by Git
+# Custom middleware (auth, validation, etc.) will be added here
