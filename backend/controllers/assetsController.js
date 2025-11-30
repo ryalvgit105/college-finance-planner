@@ -1,4 +1,5 @@
 const Asset = require('../models/Asset');
+const mongoose = require('mongoose');
 
 // @desc    Create a new asset
 // @route   POST /api/assets
@@ -46,6 +47,18 @@ exports.createAsset = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllAssets = async (req, res) => {
     try {
+        // Mock data fallback if DB is offline
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(200).json({
+                success: true,
+                count: 2,
+                data: [
+                    { _id: '1', name: 'Savings Account', value: 5000, type: 'Cash' },
+                    { _id: '2', name: 'Investment Portfolio', value: 12000, type: 'Investment' }
+                ]
+            });
+        }
+
         const assets = await Asset.find().sort({ createdAt: -1 });
 
         res.status(200).json({

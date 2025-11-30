@@ -41,6 +41,27 @@ exports.logSpending = async (req, res) => {
     }
 };
 
+// @desc    Get all spending entries
+// @route   GET /api/spending
+// @access  Public (will add auth later)
+exports.getAllSpending = async (req, res) => {
+    try {
+        const spendingEntries = await Spending.find().sort({ date: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: spendingEntries.length,
+            data: spendingEntries
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching spending',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
 // @desc    Get weekly spending breakdown
 // @route   GET /api/spending/week?start=YYYY-MM-DD
 // @access  Public (will add auth later)

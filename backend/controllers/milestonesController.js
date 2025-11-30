@@ -1,4 +1,5 @@
 const Milestone = require('../models/Milestone');
+const mongoose = require('mongoose');
 
 // @desc    Create a milestone
 // @route   POST /api/milestones
@@ -47,6 +48,20 @@ exports.createMilestone = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getMilestones = async (req, res) => {
     try {
+        // Mock data fallback if DB is offline
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(200).json({
+                success: true,
+                count: 3,
+                month: req.query.month || 'all',
+                data: [
+                    { _id: '1', title: 'Submit Application', date: new Date('2025-12-01'), achieved: false },
+                    { _id: '2', title: 'Scholarship Deadline', date: new Date('2026-01-15'), achieved: false },
+                    { _id: '3', title: 'Campus Visit', date: new Date('2026-03-10'), achieved: false }
+                ]
+            });
+        }
+
         const { month } = req.query;
         let query = {};
 
@@ -83,9 +98,52 @@ exports.getMilestones = async (req, res) => {
             data: milestones
         });
     } catch (error) {
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => ({
+                field: err.path,
+                message: err.message
+            }));
+
+            return res.status(400).json({
+                success: false,
+                errors
+            });
+        }
+
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching milestones',
+            message: 'Server error while updating milestone',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Update a milestone
+// @route   PATCH /api/milestones/:id
+// @access  Public (will add auth later)
+exports.updateMilestone = async (req, res) => {
+    try {
+        const milestone = await Milestone.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!milestone) {
+            return res.status(404).json({
+                success: false,
+                message: 'Milestone not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: milestone
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating milestone',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

@@ -12,6 +12,11 @@ const goalSchema = new mongoose.Schema({
         required: [true, 'Target amount is required'],
         min: [0, 'Target amount must be a positive number']
     },
+    currentAmount: {
+        type: Number,
+        default: 0,
+        min: [0, 'Current amount must be a positive number']
+    },
     targetDate: {
         type: Date,
         required: [true, 'Target date is required']

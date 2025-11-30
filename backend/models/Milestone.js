@@ -23,6 +23,10 @@ const milestoneSchema = new mongoose.Schema({
     relatedGoalId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Goal'
+    },
+    achieved: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

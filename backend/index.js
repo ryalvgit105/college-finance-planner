@@ -22,7 +22,8 @@ mongoose.connect(MONGODB_URI)
   })
   .catch((error) => {
     console.error('❌ MongoDB connection error:', error.message);
-    process.exit(1);
+    console.warn('⚠️  Running in offline mode with mock data');
+    // process.exit(1); // Don't exit, allow mock data fallback
   });
 
 // MongoDB connection events
@@ -63,8 +64,10 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({
-    status: 'OK'
+    status: 'healthy',
+    database: dbStatus
   });
 });
 

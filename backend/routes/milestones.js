@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator');
-const { createMilestone, getMilestones } = require('../controllers/milestonesController');
+const { createMilestone, getMilestones, updateMilestone } = require('../controllers/milestonesController');
 
 // Validation middleware for creating milestones
 const validateMilestone = [
@@ -59,5 +59,6 @@ const handleValidationErrors = (req, res, next) => {
 // Routes
 router.post('/', validateMilestone, handleValidationErrors, createMilestone);
 router.get('/', validateMonthQuery, handleValidationErrors, getMilestones);
+router.patch('/:id', handleValidationErrors, updateMilestone);
 
 module.exports = router;

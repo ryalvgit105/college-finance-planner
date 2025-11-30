@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator');
-const { logSpending, getWeeklyBreakdown } = require('../controllers/spendingController');
+const { logSpending, getAllSpending, getWeeklyBreakdown } = require('../controllers/spendingController');
 
 // Validation middleware for logging spending
 const validateSpending = [
@@ -55,6 +55,7 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Routes
+router.get('/', getAllSpending);
 router.post('/', validateSpending, handleValidationErrors, logSpending);
 router.get('/week', validateWeekQuery, handleValidationErrors, getWeeklyBreakdown);
 
