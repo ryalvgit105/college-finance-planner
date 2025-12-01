@@ -50,6 +50,31 @@ const goalSchema = new mongoose.Schema({
         type: String,
         trim: true,
         maxlength: [1000, 'Notes cannot exceed 1000 characters']
+    },
+    // Phase 5 Additions
+    priority: {
+        type: Number,
+        min: 1,
+        max: 5,
+        default: 3
+    },
+    riskLevel: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'medium'
+    },
+    autoAllocate: {
+        type: Boolean,
+        default: false
+    },
+    category: {
+        type: String,
+        enum: ['investment', 'education', 'housing', 'business', 'misc'],
+        default: 'misc'
+    },
+    expectedReturnRate: {
+        type: Number,
+        default: 0.05 // 5% default
     }
 }, {
     timestamps: true

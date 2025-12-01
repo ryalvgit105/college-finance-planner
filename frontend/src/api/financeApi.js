@@ -256,3 +256,65 @@ export const getDashboardSummary = async (profileId) => {
         throw error;
     }
 };
+
+// Opportunity Cost API
+export const getPathTemplates = async () => {
+    try {
+        const response = await api.get('/api/opportunity/templates');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching path templates:', error);
+        throw error;
+    }
+};
+
+export const compareOpportunityCost = async (data) => {
+    try {
+        const response = await api.post('/api/opportunity/compare', data);
+        return response.data;
+    } catch (error) {
+        console.error('Error comparing opportunity cost:', error);
+        throw error;
+    }
+};
+
+// Investment API
+export const getInvestments = async (profileId) => {
+    try {
+        const response = await api.get(`/api/investments/${profileId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching investments:', error);
+        throw error;
+    }
+};
+
+export const createInvestment = async (data) => {
+    try {
+        const response = await api.post('/api/investments', data);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating investment:', error);
+        throw error;
+    }
+};
+
+export const updateInvestment = async (id, data) => {
+    try {
+        const response = await api.put(`/api/investments/${id}`, data);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating investment:', error);
+        throw error;
+    }
+};
+
+export const deleteInvestment = async (id) => {
+    try {
+        const response = await api.delete(`/api/investments/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting investment:', error);
+        throw error;
+    }
+};

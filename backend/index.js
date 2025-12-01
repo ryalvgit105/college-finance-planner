@@ -49,6 +49,12 @@ const profilesRoutes = require('./routes/profiles');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const taxRoutes = require('./routes/taxRoutes');
 const benefitsRoutes = require('./routes/benefitsRoutes');
+const opportunityCostRoutes = require('./routes/opportunityCostRoutes');
+const investmentRoutes = require('./routes/investmentRoutes');
+const seedTemplates = require('./utils/seedTemplates');
+
+// Run Seed
+seedTemplates();
 
 app.use('/api/assets', assetsRoutes);
 app.use('/api/debts', debtsRoutes);
@@ -61,6 +67,8 @@ app.use('/api/profiles', profilesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/tax', taxRoutes);
 app.use('/api/benefits', benefitsRoutes);
+app.use('/api/opportunity', opportunityCostRoutes);
+app.use('/api/investments', investmentRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

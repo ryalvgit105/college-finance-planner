@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
-import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings } from 'react-icons/lu';
+import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings, LuTrendingUp, LuTarget } from 'react-icons/lu';
 
 const Sidebar = () => {
     const { currentProfile } = useProfile();
@@ -14,7 +14,10 @@ const Sidebar = () => {
         { name: 'Spending', path: '/spending', icon: LuShoppingCart, module: 'spending' },
         { name: 'Goals', path: '/goals', icon: LuTrophy, module: 'goals' },
         { name: 'Milestones', path: '/milestones', icon: LuCalendar, module: 'milestones' },
-        { name: 'Tax & Benefits', path: '/tax-benefits', icon: LuLandmark, module: 'income' }, // Using Income module for now or null
+        { name: 'Tax & Benefits', path: '/tax-benefits', icon: LuLandmark, module: 'income' },
+        { name: 'Opportunity Cost', path: '/opportunity-cost', icon: LuTrophy, module: null },
+        { name: 'Investments', path: '/investments', icon: LuTrendingUp, module: 'assets' },
+        { name: 'Goal Planner', path: '/goal-planner', icon: LuTarget, module: 'goals' },
     ];
 
     // Filter items based on enabled modules

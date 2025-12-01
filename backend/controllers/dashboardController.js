@@ -7,6 +7,7 @@ const Milestone = require('../models/Milestone');
 const Tax = require('../models/Tax');
 const Benefits = require('../models/Benefits');
 const { calculateNetIncome } = require('../utils/incomeCalculator');
+const { calculateAllocations } = require('../utils/allocationEngine');
 
 // @desc    Get dashboard summary data
 // @route   GET /api/dashboard/summary/:profileId
@@ -82,6 +83,9 @@ exports.getDashboardSummary = async (req, res) => {
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(0, 3);
 
+        // --- Phase 5: Allocation Engine Integration ---
+        const allocationResults = calculateAllocations(goals, netMonthlyIncome);
+
         // 4. Construct Payload
         const payload = {
             assets: totalAssets,
@@ -98,7 +102,11 @@ exports.getDashboardSummary = async (req, res) => {
             netAnnualIncome: incomeDetails.netAnnualIncome,
             federalTax: incomeDetails.federalTax,
             stateTax: incomeDetails.stateTax,
-            totalBenefits: incomeDetails.totalBenefits
+            totalBenefits: incomeDetails.totalBenefits,
+            // Phase 5 Extensions
+            recommendedMonthlyAllocations: allocationResults.allocations,
+            totalGoalShortfall: allocationResults.totalShortfall,
+            priorityRanking: allocationResults.allocations.map(a => ({ name: a.goalName, priority: a.priority }))
         };
 
         res.status(200).json({
