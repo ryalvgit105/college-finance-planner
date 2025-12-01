@@ -47,6 +47,8 @@ const milestonesRoutes = require('./routes/milestones');
 const spendingRoutes = require('./routes/spending');
 const profilesRoutes = require('./routes/profiles');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const taxRoutes = require('./routes/taxRoutes');
+const benefitsRoutes = require('./routes/benefitsRoutes');
 
 app.use('/api/assets', assetsRoutes);
 app.use('/api/debts', debtsRoutes);
@@ -57,6 +59,8 @@ app.use('/api/milestones', milestonesRoutes);
 app.use('/api/spending', spendingRoutes);
 app.use('/api/profiles', profilesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/tax', taxRoutes);
+app.use('/api/benefits', benefitsRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

@@ -7,19 +7,20 @@ const Sidebar = () => {
     const { currentProfile } = useProfile();
 
     const navItems = [
-        { name: 'Dashboard', path: '/', icon: LuHouse, module: null }, // Always shown
+        { name: 'Dashboard', path: '/', icon: LuHouse, module: null },
         { name: 'Assets', path: '/assets', icon: LuDollarSign, module: 'assets' },
         { name: 'Debts', path: '/debts', icon: LuCreditCard, module: 'debts' },
         { name: 'Income', path: '/income', icon: LuLandmark, module: 'income' },
         { name: 'Spending', path: '/spending', icon: LuShoppingCart, module: 'spending' },
         { name: 'Goals', path: '/goals', icon: LuTrophy, module: 'goals' },
         { name: 'Milestones', path: '/milestones', icon: LuCalendar, module: 'milestones' },
+        { name: 'Tax & Benefits', path: '/tax-benefits', icon: LuLandmark, module: 'income' }, // Using Income module for now or null
     ];
 
     // Filter items based on enabled modules
     const visibleItems = navItems.filter(item => {
-        if (!item.module) return true; // Always show items without a module (Dashboard)
-        if (!currentProfile || !currentProfile.enabledModules) return true; // Show all if profile not loaded yet
+        if (!item.module) return true;
+        if (!currentProfile || !currentProfile.enabledModules) return true;
         return currentProfile.enabledModules[item.module];
     });
 

@@ -195,7 +195,12 @@ const Dashboard = () => {
                             <p className="text-3xl font-bold text-gray-900">
                                 ${financialData.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
-                            <p className="text-sm text-blue-600 mt-2 font-medium">Monthly total</p>
+                            <p className="text-sm text-blue-600 mt-2 font-medium">Net Monthly Income</p>
+                            {financialData.federalTax > 0 && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    After Tax: -${((financialData.federalTax + financialData.stateTax) / 12).toFixed(0)}/mo
+                                </p>
+                            )}
                         </div>
 
                         {/* Spending Card */}

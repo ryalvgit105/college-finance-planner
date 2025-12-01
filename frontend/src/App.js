@@ -7,6 +7,7 @@ import Income from './pages/Income';
 import Spending from './pages/Spending';
 import Goals from './pages/Goals';
 import Milestones from './pages/Milestones';
+import TaxBenefits from './pages/TaxBenefits';
 import Settings from './pages/Settings';
 import { ProfileProvider } from './context/ProfileContext';
 
@@ -23,6 +24,7 @@ function App() {
                         <Route path="spending" element={<Spending />} />
                         <Route path="goals" element={<Goals />} />
                         <Route path="milestones" element={<Milestones />} />
+                        <Route path="tax-benefits" element={<TaxBenefits />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>
                 </Routes>

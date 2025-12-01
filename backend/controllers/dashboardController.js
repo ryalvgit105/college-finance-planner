@@ -4,6 +4,9 @@ const Income = require('../models/Income');
 const Spending = require('../models/Spending');
 const Goal = require('../models/Goal');
 const Milestone = require('../models/Milestone');
+const Tax = require('../models/Tax');
+const Benefits = require('../models/Benefits');
+const { calculateNetIncome } = require('../utils/incomeCalculator');
 
 // @desc    Get dashboard summary data
 // @route   GET /api/dashboard/summary/:profileId
@@ -20,7 +23,7 @@ exports.getDashboardSummary = async (req, res) => {
         }
 
         // 1. Fetch Data in Parallel
-        const [assets, debts, incomeRecords, spending, goals, milestones] = await Promise.all([
+        const [assets, debts, incomeRecords, spending, goals, milestones, taxSettings, benefits] = await Promise.all([
             Asset.find({ profileId }),
             Debt.find({ profileId }),
             Income.find({ profileId }).sort({ createdAt: -1 }).limit(1),
@@ -32,7 +35,9 @@ exports.getDashboardSummary = async (req, res) => {
                 }
             }),
             Goal.find({ profileId }),
-            Milestone.find({ profileId })
+            Milestone.find({ profileId }),
+            Tax.findOne({ profileId }),
+            Benefits.findOne({ profileId })
         ]);
 
         // 2. Calculate Aggregates
@@ -43,10 +48,13 @@ exports.getDashboardSummary = async (req, res) => {
         // Total Debts
         const totalDebts = debts.reduce((sum, debt) => sum + (debt.balance || 0), 0);
 
-        // Monthly Income (Annual / 12) from latest record
+        // Gross Income (Annual) from latest record
         const latestIncome = incomeRecords.length > 0 ? incomeRecords[0] : null;
-        const annualIncome = latestIncome ? (latestIncome.currentIncome || 0) : 0;
-        const monthlyIncome = annualIncome / 12;
+        const grossAnnualIncome = latestIncome ? (latestIncome.currentIncome || 0) : 0;
+
+        // Calculate Net Income using Tax + Benefits Engine
+        const incomeDetails = calculateNetIncome(grossAnnualIncome, taxSettings, benefits);
+        const netMonthlyIncome = incomeDetails.netMonthlyIncome;
 
         // Monthly Spending (Sum of current month)
         const monthlySpending = spending.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -54,11 +62,11 @@ exports.getDashboardSummary = async (req, res) => {
         // Net Worth
         const netWorth = totalAssets - totalDebts;
 
-        // Monthly Savings
-        const monthlySavings = monthlyIncome - monthlySpending;
+        // Monthly Savings (Net Income - Spending)
+        const monthlySavings = netMonthlyIncome - monthlySpending;
 
         // Savings Rate
-        const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
+        const savingsRate = netMonthlyIncome > 0 ? (monthlySavings / netMonthlyIncome) * 100 : 0;
 
         // 3. Process Lists
 
@@ -78,13 +86,19 @@ exports.getDashboardSummary = async (req, res) => {
         const payload = {
             assets: totalAssets,
             debts: totalDebts,
-            income: monthlyIncome,
+            income: netMonthlyIncome, // Updated to Net Monthly
+            grossIncome: grossAnnualIncome / 12, // Keep gross for reference if needed
             spending: monthlySpending,
             netWorth,
             monthlySavings,
             savingsRate,
             activeGoals,
-            upcomingMilestones
+            upcomingMilestones,
+            // Phase 2 Extensions
+            netAnnualIncome: incomeDetails.netAnnualIncome,
+            federalTax: incomeDetails.federalTax,
+            stateTax: incomeDetails.stateTax,
+            totalBenefits: incomeDetails.totalBenefits
         };
 
         res.status(200).json({

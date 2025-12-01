@@ -1,4 +1,6 @@
 const Profile = require('../models/Profile');
+const Tax = require('../models/Tax');
+const Benefits = require('../models/Benefits');
 
 // @desc    Create a new profile
 // @route   POST /api/profiles
@@ -21,6 +23,12 @@ exports.createProfile = async (req, res) => {
             name,
             profileType
         });
+
+        // Initialize default Tax and Benefits settings
+        await Promise.all([
+            Tax.create({ profileId: profile._id }),
+            Benefits.create({ profileId: profile._id })
+        ]);
 
         res.status(201).json({
             success: true,

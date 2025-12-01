@@ -203,6 +203,48 @@ export const updateMilestone = async (id, milestoneData) => {
     }
 };
 
+// Tax API
+export const getTax = async (profileId) => {
+    try {
+        const response = await api.get(`/api/tax/${profileId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching tax settings:', error);
+        throw error;
+    }
+};
+
+export const updateTax = async (taxData) => {
+    try {
+        const response = await api.post('/api/tax', taxData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating tax settings:', error);
+        throw error;
+    }
+};
+
+// Benefits API
+export const getBenefits = async (profileId) => {
+    try {
+        const response = await api.get(`/api/benefits/${profileId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching benefits:', error);
+        throw error;
+    }
+};
+
+export const updateBenefits = async (benefitsData) => {
+    try {
+        const response = await api.post('/api/benefits', benefitsData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating benefits:', error);
+        throw error;
+    }
+};
+
 // Dashboard Summary - Aggregated data for dashboard
 export const getDashboardSummary = async (profileId) => {
     try {
