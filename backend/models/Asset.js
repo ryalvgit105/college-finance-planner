@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const assetSchema = new mongoose.Schema({
+    profileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile',
+        required: [true, 'Profile ID is required']
+    },
     type: {
         type: String,
         required: [true, 'Asset type is required'],

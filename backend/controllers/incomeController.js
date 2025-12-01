@@ -5,11 +5,19 @@ const Income = require('../models/Income');
 // @access  Public (will add auth later)
 exports.createOrUpdateIncome = async (req, res) => {
     try {
-        const { currentIncome, incomeSources, careerGoal, projectedSalary, educationRequired, notes } = req.body;
+        const { profileId, currentIncome, incomeSources, careerGoal, projectedSalary, educationRequired, notes } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         // For now, we'll create a new entry each time
         // In production with auth, you'd update the user's existing income record
         const income = await Income.create({
+            profileId,
             currentIncome,
             incomeSources,
             careerGoal,
@@ -50,8 +58,15 @@ exports.createOrUpdateIncome = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getIncome = async (req, res) => {
     try {
+        const { profileId } = req.query;
+        let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
         // Get all income records, sorted by most recent
-        const incomeRecords = await Income.find().sort({ createdAt: -1 });
+        const incomeRecords = await Income.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,

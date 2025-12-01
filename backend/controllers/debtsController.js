@@ -5,10 +5,18 @@ const Debt = require('../models/Debt');
 // @access  Public (will add auth later)
 exports.createDebt = async (req, res) => {
     try {
-        const { type, balance, interestRate, monthlyPayment, description } = req.body;
+        const { profileId, type, balance, interestRate, monthlyPayment, description } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         // Create new debt
         const debt = await Debt.create({
+            profileId,
             type,
             balance,
             interestRate,
@@ -48,7 +56,14 @@ exports.createDebt = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllDebts = async (req, res) => {
     try {
-        const debts = await Debt.find().sort({ createdAt: -1 });
+        const { profileId } = req.query;
+        let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
+        const debts = await Debt.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,

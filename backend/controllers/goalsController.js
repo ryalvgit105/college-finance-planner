@@ -6,10 +6,18 @@ const mongoose = require('mongoose');
 // @access  Public (will add auth later)
 exports.createGoal = async (req, res) => {
     try {
-        const { goalName, targetAmount, targetDate, monthlyBudget, categories, notes } = req.body;
+        const { profileId, goalName, targetAmount, targetDate, monthlyBudget, categories, notes } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         // Create new goal
         const goal = await Goal.create({
+            profileId,
             goalName,
             targetAmount,
             targetDate,
@@ -50,6 +58,13 @@ exports.createGoal = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllGoals = async (req, res) => {
     try {
+        const { profileId } = req.query;
+        let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
         // Mock data fallback if DB is offline
         if (mongoose.connection.readyState !== 1) {
             return res.status(200).json({
@@ -63,7 +78,7 @@ exports.getAllGoals = async (req, res) => {
             });
         }
 
-        const goals = await Goal.find().sort({ targetDate: 1 });
+        const goals = await Goal.find(query).sort({ targetDate: 1 });
 
         res.status(200).json({
             success: true,

@@ -5,9 +5,17 @@ const Spending = require('../models/Spending');
 // @access  Public (will add auth later)
 exports.logSpending = async (req, res) => {
     try {
-        const { date, category, amount, notes } = req.body;
+        const { profileId, date, category, amount, notes } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         const spending = await Spending.create({
+            profileId,
             date,
             category,
             amount,
@@ -46,7 +54,14 @@ exports.logSpending = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllSpending = async (req, res) => {
     try {
-        const spendingEntries = await Spending.find().sort({ date: -1 });
+        const { profileId } = req.query;
+        let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
+        const spendingEntries = await Spending.find(query).sort({ date: -1 });
 
         res.status(200).json({
             success: true,
@@ -67,7 +82,7 @@ exports.getAllSpending = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getWeeklyBreakdown = async (req, res) => {
     try {
-        const { start } = req.query;
+        const { start, profileId } = req.query;
 
         if (!start) {
             return res.status(400).json({
@@ -85,13 +100,19 @@ exports.getWeeklyBreakdown = async (req, res) => {
         endDate.setDate(endDate.getDate() + 6);
         endDate.setHours(23, 59, 59, 999);
 
-        // Fetch all spending records for the week
-        const spendingRecords = await Spending.find({
+        let query = {
             date: {
                 $gte: startDate,
                 $lte: endDate
             }
-        }).sort({ date: 1 });
+        };
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
+        // Fetch all spending records for the week
+        const spendingRecords = await Spending.find(query).sort({ date: 1 });
 
         // Group by day and calculate totals
         const dailyTotals = {};

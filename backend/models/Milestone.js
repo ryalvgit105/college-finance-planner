@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const milestoneSchema = new mongoose.Schema({
+    profileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile',
+        required: [true, 'Profile ID is required']
+    },
     title: {
         type: String,
         required: [true, 'Milestone title is required'],

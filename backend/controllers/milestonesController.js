@@ -6,9 +6,17 @@ const mongoose = require('mongoose');
 // @access  Public (will add auth later)
 exports.createMilestone = async (req, res) => {
     try {
-        const { title, date, description, expectedCost, relatedGoalId } = req.body;
+        const { profileId, title, date, description, expectedCost, relatedGoalId } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         const milestone = await Milestone.create({
+            profileId,
             title,
             date,
             description,
@@ -62,8 +70,12 @@ exports.getMilestones = async (req, res) => {
             });
         }
 
-        const { month } = req.query;
+        const { month, profileId } = req.query;
         let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
 
         // If month parameter is provided, filter by that month
         if (month) {
@@ -124,10 +136,23 @@ exports.getMilestones = async (req, res) => {
 // @access  Public (will add auth later)
 exports.updateMilestone = async (req, res) => {
     try {
-        const milestone = await Milestone.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
+        const { profileId } = req.body; // Expect profileId in body for updates to verify ownership
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required for verification'
+            });
+        }
+
+        const milestone = await Milestone.findOneAndUpdate(
+            { _id: req.params.id, profileId },
+            req.body,
+            {
+                new: true,
+                runValidators: true
+            }
+        );
 
         if (!milestone) {
             return res.status(404).json({

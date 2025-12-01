@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const incomeSchema = new mongoose.Schema({
+    profileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile',
+        required: [true, 'Profile ID is required']
+    },
     currentIncome: {
         type: Number,
         required: [true, 'Current income is required'],

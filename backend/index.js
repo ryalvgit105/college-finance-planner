@@ -45,6 +45,8 @@ const goalsRoutes = require('./routes/goals');
 const projectionRoutes = require('./routes/projection');
 const milestonesRoutes = require('./routes/milestones');
 const spendingRoutes = require('./routes/spending');
+const profilesRoutes = require('./routes/profiles');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 app.use('/api/assets', assetsRoutes);
 app.use('/api/debts', debtsRoutes);
@@ -53,6 +55,8 @@ app.use('/api/goals', goalsRoutes);
 app.use('/api/projection', projectionRoutes);
 app.use('/api/milestones', milestonesRoutes);
 app.use('/api/spending', spendingRoutes);
+app.use('/api/profiles', profilesRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Test Routes
 app.get('/api', (req, res) => {

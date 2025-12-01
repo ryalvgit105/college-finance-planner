@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Finance Planner - Complete API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .response.show {
+            display: block;
+        }
+
+        .response.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .response.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        pre {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 12px;
+            max-height: 400px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🏦 College Finance Planner - Complete API Tester</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('assets')">💰 Assets</button>
+            <button class="tab" onclick="showTab('debts')">💳 Debts</button>
+            <button class="tab" onclick="showTab('income')">💵 Income</button>
+            <button class="tab" onclick="showTab('goals')">🎯 Goals</button>
+            <button class="tab" onclick="showTab('projection')">📊 Projection</button>
+        </div>
+
+        <!-- Assets Tab -->
+        <div id="assets-tab" class="tab-content active">
+            <div class="api-section">
+                <h2>💰 Assets API</h2>
+                <div class="form-group">
+                    <label>Type</label>
+                    <input type="text" id="assetType" placeholder="e.g., Savings Account">
+                </div>
+                <div class="form-group">
+                    <label>Value ($)</label>
+                    <input type="number" id="assetValue" placeholder="e.g., 10000">
+                </div>
+                <div class="form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="assetDescription" placeholder="e.g., Emergency fund"></textarea>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createAsset()">Create Asset</button>
+                    <button class="btn-secondary" onclick="getAssets()">Get All Assets</button>
+                </div>
+                <div id="assetResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Debts Tab -->
+        <div id="debts-tab" class="tab-content">
+            <div class="api-section">
+                <h2>💳 Debts API</h2>
+                <div class="form-group">
+                    <label>Type</label>
+                    <input type="text" id="debtType" placeholder="e.g., Student Loan">
+                </div>
+                <div class="form-group">
+                    <label>Balance ($)</label>
+                    <input type="number" id="debtBalance" placeholder="e.g., 25000">
+                </div>
+                <div class="form-group">
+                    <label>Interest Rate (%) - optional</label>
+                    <input type="number" step="0.1" id="debtInterest" placeholder="e.g., 4.5">
+                </div>
+                <div class="form-group">
+                    <label>Monthly Payment ($) - optional</label>
+                    <input type="number" id="debtPayment" placeholder="e.g., 300">
+                </div>
+                <div class="form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="debtDescription" placeholder="e.g., Federal student loan"></textarea>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createDebt()">Create Debt</button>
+                    <button class="btn-secondary" onclick="getDebts()">Get All Debts</button>
+                </div>
+                <div id="debtResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Income Tab -->
+        <div id="income-tab" class="tab-content">
+            <div class="api-section">
+                <h2>💵 Income & Career API</h2>
+                <div class="form-group">
+                    <label>Current Income ($)</label>
+                    <input type="number" id="currentIncome" placeholder="e.g., 45000">
+                </div>
+                <div class="form-group">
+                    <label>Income Sources (comma-separated)</label>
+                    <input type="text" id="incomeSources" placeholder="e.g., part-time job, freelance">
+                </div>
+                <div class="form-group">
+                    <label>Career Goal</label>
+                    <input type="text" id="careerGoal" placeholder="e.g., Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label>Projected Salary ($) - optional</label>
+                    <input type="number" id="projectedSalary" placeholder="e.g., 85000">
+                </div>
+                <div class="form-group">
+                    <label>Education Required - optional</label>
+                    <input type="text" id="educationRequired" placeholder="e.g., Bachelor's in CS">
+                </div>
+                <div class="form-group">
+                    <label>Notes - optional</label>
+                    <textarea id="incomeNotes" placeholder="Additional notes"></textarea>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createIncome()">Submit Income</button>
+                    <button class="btn-secondary" onclick="getIncome()">Get Income Records</button>
+                </div>
+                <div id="incomeResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Goals Tab -->
+        <div id="goals-tab" class="tab-content">
+            <div class="api-section">
+                <h2>🎯 Financial Goals API</h2>
+                <div class="form-group">
+                    <label>Goal Name</label>
+                    <input type="text" id="goalName" placeholder="e.g., Buy a car">
+                </div>
+                <div class="form-group">
+                    <label>Target Amount ($)</label>
+                    <input type="number" id="targetAmount" placeholder="e.g., 25000">
+                </div>
+                <div class="form-group">
+                    <label>Target Date</label>
+                    <input type="date" id="targetDate">
+                </div>
+                <div class="form-group">
+                    <label>Monthly Budget ($)</label>
+                    <input type="number" id="monthlyBudget" placeholder="e.g., 800">
+                </div>
+                <div class="form-group">
+                    <label>Budget Categories (JSON format)</label>
+                    <textarea id="categories" placeholder='{"rent":1200,"food":400,"investments":300}'></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notes - optional</label>
+                    <textarea id="goalNotes" placeholder="Additional notes"></textarea>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createGoal()">Create Goal</button>
+                    <button class="btn-secondary" onclick="getGoals()">Get All Goals</button>
+                </div>
+                <div id="goalResponse" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Projection Tab -->
+        <div id="projection-tab" class="tab-content">
+            <div class="api-section">
+                <h2>📊 Financial Projection</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Click the button below to generate a comprehensive financial analysis based on all your data.
+                </p>
+                <button class="btn-primary" onclick="getProjection()" style="width: 100%;">
+                    Generate Financial Projection
+                </button>
+                <div id="projectionResponse" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showResponse(elementId, data, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.className = `response show ${isSuccess ? 'success' : 'error'}`;
+            const statusBadge = `<span class="status-badge ${isSuccess ? 'status-success' : 'status-error'}">
+                ${isSuccess ? '✓ Success' : '✗ Error'}
+            </span>`;
+            element.innerHTML = statusBadge + '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+
+        // Assets API
+        async function createAsset() {
+            const type = document.getElementById('assetType').value;
+            const value = parseFloat(document.getElementById('assetValue').value);
+            const description = document.getElementById('assetDescription').value;
+
+            if (!type || !value) { alert('Please fill in Type and Value'); return; }
+
+            try {
+                const response = await fetch(`${API_BASE}/assets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, value, description: description || undefined })
+                });
+                const data = await response.json();
+                showResponse('assetResponse', data, response.ok);
+                if (response.ok) {
+                    document.getElementById('assetType').value = '';
+                    document.getElementById('assetValue').value = '';
+                    document.getElementById('assetDescription').value = '';
+                }
+            } catch (error) {
+                showResponse('assetResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getAssets() {
+            try {
+                const response = await fetch(`${API_BASE}/assets`);
+                const data = await response.json();
+                showResponse('assetResponse', data, response.ok);
+            } catch (error) {
+                showResponse('assetResponse', { error: error.message }, false);
+            }
+        }
+
+        // Debts API
+        async function createDebt() {
+            const type = document.getElementById('debtType').value;
+            const balance = parseFloat(document.getElementById('debtBalance').value);
+            const interestRate = document.getElementById('debtInterest').value;
+            const monthlyPayment = document.getElementById('debtPayment').value;
+            const description = document.getElementById('debtDescription').value;
+
+            if (!type || !balance) { alert('Please fill in Type and Balance'); return; }
+
+            const payload = { type, balance };
+            if (interestRate) payload.interestRate = parseFloat(interestRate);
+            if (monthlyPayment) payload.monthlyPayment = parseFloat(monthlyPayment);
+            if (description) payload.description = description;
+
+            try {
+                const response = await fetch(`${API_BASE}/debts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                showResponse('debtResponse', data, response.ok);
+                if (response.ok) {
+                    document.getElementById('debtType').value = '';
+                    document.getElementById('debtBalance').value = '';
+                    document.getElementById('debtInterest').value = '';
+                    document.getElementById('debtPayment').value = '';
+                    document.getElementById('debtDescription').value = '';
+                }
+            } catch (error) {
+                showResponse('debtResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getDebts() {
+            try {
+                const response = await fetch(`${API_BASE}/debts`);
+                const data = await response.json();
+                showResponse('debtResponse', data, response.ok);
+            } catch (error) {
+                showResponse('debtResponse', { error: error.message }, false);
+            }
+        }
+
+        // Income API
+        async function createIncome() {
+            const currentIncome = parseFloat(document.getElementById('currentIncome').value);
+            const sourcesStr = document.getElementById('incomeSources').value;
+            const careerGoal = document.getElementById('careerGoal').value;
+            const projectedSalary = document.getElementById('projectedSalary').value;
+            const educationRequired = document.getElementById('educationRequired').value;
+            const notes = document.getElementById('incomeNotes').value;
+
+            if (!currentIncome || !careerGoal) { alert('Please fill in Current Income and Career Goal'); return; }
+
+            const incomeSources = sourcesStr ? sourcesStr.split(',').map(s => s.trim()) : [];
+
+            const payload = { currentIncome, incomeSources, careerGoal };
+            if (projectedSalary) payload.projectedSalary = parseFloat(projectedSalary);
+            if (educationRequired) payload.educationRequired = educationRequired;
+            if (notes) payload.notes = notes;
+
+            try {
+                const response = await fetch(`${API_BASE}/income`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                showResponse('incomeResponse', data, response.ok);
+                if (response.ok) {
+                    document.getElementById('currentIncome').value = '';
+                    document.getElementById('incomeSources').value = '';
+                    document.getElementById('careerGoal').value = '';
+                    document.getElementById('projectedSalary').value = '';
+                    document.getElementById('educationRequired').value = '';
+                    document.getElementById('incomeNotes').value = '';
+                }
+            } catch (error) {
+                showResponse('incomeResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getIncome() {
+            try {
+                const response = await fetch(`${API_BASE}/income`);
+                const data = await response.json();
+                showResponse('incomeResponse', data, response.ok);
+            } catch (error) {
+                showResponse('incomeResponse', { error: error.message }, false);
+            }
+        }
+
+        // Goals API
+        async function createGoal() {
+            const goalName = document.getElementById('goalName').value;
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value);
+            const targetDate = document.getElementById('targetDate').value;
+            const monthlyBudget = parseFloat(document.getElementById('monthlyBudget').value);
+            const categoriesStr = document.getElementById('categories').value;
+            const notes = document.getElementById('goalNotes').value;
+
+            if (!goalName || !targetAmount || !targetDate || !monthlyBudget) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            let categories = {};
+            if (categoriesStr) {
+                try {
+                    categories = JSON.parse(categoriesStr);
+                } catch (e) {
+                    alert('Invalid JSON format for categories');
+                    return;
+                }
+            }
+
+            const payload = { goalName, targetAmount, targetDate, monthlyBudget, categories };
+            if (notes) payload.notes = notes;
+
+            try {
+                const response = await fetch(`${API_BASE}/goals`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                showResponse('goalResponse', data, response.ok);
+                if (response.ok) {
+                    document.getElementById('goalName').value = '';
+                    document.getElementById('targetAmount').value = '';
+                    document.getElementById('targetDate').value = '';
+                    document.getElementById('monthlyBudget').value = '';
+                    document.getElementById('categories').value = '';
+                    document.getElementById('goalNotes').value = '';
+                }
+            } catch (error) {
+                showResponse('goalResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getGoals() {
+            try {
+                const response = await fetch(`${API_BASE}/goals`);
+                const data = await response.json();
+                showResponse('goalResponse', data, response.ok);
+            } catch (error) {
+                showResponse('goalResponse', { error: error.message }, false);
+            }
+        }
+
+        // Projection API
+        async function getProjection() {
+            try {
+                const response = await fetch(`${API_BASE}/projection`);
+                const data = await response.json();
+                showResponse('projectionResponse', data, response.ok);
+            } catch (error) {
+                showResponse('projectionResponse', { error: error.message }, false);
+            }
+        }
+    </script>
+</body>
+
+</html>

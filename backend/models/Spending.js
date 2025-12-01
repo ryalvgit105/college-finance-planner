@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const spendingSchema = new mongoose.Schema({
+    profileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile',
+        required: [true, 'Profile ID is required']
+    },
     date: {
         type: Date,
         required: [true, 'Date is required']

@@ -42,7 +42,7 @@ college-finance-planner/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/college-finance-planner.git
+   git clone https://github.com/ryalvgit105/college-finance-planner.git
    cd college-finance-planner
    ```
 
@@ -112,7 +112,7 @@ college-finance-planner/
 
 5. **Link Local Repository to GitHub**
    ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/college-finance-planner.git
+   git remote add origin https://github.com/ryalvgit105/college-finance-planner.git
    git branch -M main
    git push -u origin main
    ```

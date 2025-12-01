@@ -8,11 +8,20 @@ const Goal = require('../models/Goal');
 // @access  Public (will add auth later)
 exports.getProjection = async (req, res) => {
     try {
-        // Fetch all financial data
-        const assets = await Asset.find();
-        const debts = await Debt.find();
-        const incomeRecords = await Income.find().sort({ createdAt: -1 }).limit(1);
-        const goals = await Goal.find();
+        const { profileId } = req.query;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
+
+        // Fetch all financial data scoped by profileId
+        const assets = await Asset.find({ profileId });
+        const debts = await Debt.find({ profileId });
+        const incomeRecords = await Income.find({ profileId }).sort({ createdAt: -1 }).limit(1);
+        const goals = await Goal.find({ profileId });
 
         // Get the most recent income record
         const currentIncome = incomeRecords.length > 0 ? incomeRecords[0] : null;

@@ -6,10 +6,18 @@ const mongoose = require('mongoose');
 // @access  Public (will add auth later)
 exports.createAsset = async (req, res) => {
     try {
-        const { type, value, description } = req.body;
+        const { profileId, type, value, description } = req.body;
+
+        if (!profileId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile ID is required'
+            });
+        }
 
         // Create new asset
         const asset = await Asset.create({
+            profileId,
             type,
             value,
             description
@@ -47,6 +55,13 @@ exports.createAsset = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllAssets = async (req, res) => {
     try {
+        const { profileId } = req.query;
+        let query = {};
+
+        if (profileId) {
+            query.profileId = profileId;
+        }
+
         // Mock data fallback if DB is offline
         if (mongoose.connection.readyState !== 1) {
             return res.status(200).json({
@@ -59,7 +74,7 @@ exports.getAllAssets = async (req, res) => {
             });
         }
 
-        const assets = await Asset.find().sort({ createdAt: -1 });
+        const assets = await Asset.find(query).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
