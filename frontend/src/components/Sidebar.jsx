@@ -30,9 +30,10 @@ const Sidebar = () => {
     });
 
     return (
-        <aside className="w-64 bg-gradient-to-b from-primary-800 to-primary-900 text-white min-h-screen shadow-xl flex flex-col">
+        <aside className="w-64 bg-gradient-to-b from-[#1C1C1C] to-[#2E2D2D] text-white min-h-screen shadow-xl flex flex-col border-l-4 border-[#C6AA76]">
             <div className="p-6 flex-1">
-                <h2 className="text-2xl font-bold mb-8 text-primary-100">PathFinder</h2>
+                <h2 className="text-2xl font-bold mb-1 text-white">PathFinder</h2>
+                <p className="text-sm text-[#D4B483] mb-8">Choose the future that fits you.</p>
                 <nav className="space-y-2">
                     {visibleItems.map((item) => {
                         const Icon = item.icon;
@@ -43,8 +44,8 @@ const Sidebar = () => {
                                 end={item.path === '/'}
                                 className={({ isActive }) =>
                                     `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                        ? 'bg-primary-600 text-white shadow-lg transform scale-105'
-                                        : 'text-primary-200 hover:bg-primary-700 hover:text-white hover:transform hover:scale-102'
+                                        ? 'bg-[#C6AA76] text-white shadow-lg transform scale-105'
+                                        : 'text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] hover:transform hover:scale-102'
                                     }`
                                 }
                             >
@@ -56,13 +57,13 @@ const Sidebar = () => {
                 </nav>
             </div>
 
-            <div className="p-6 border-t border-primary-700">
+            <div className="p-6 border-t border-[#A7A8AA]">
                 <NavLink
                     to="/settings"
                     className={({ isActive }) =>
                         `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                            ? 'bg-primary-600 text-white shadow-lg'
-                            : 'text-primary-200 hover:bg-primary-700 hover:text-white'
+                            ? 'bg-[#C6AA76] text-white shadow-lg'
+                            : 'text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483]'
                         }`
                     }
                 >
