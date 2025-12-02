@@ -111,7 +111,24 @@ const CareerPathExplorer = () => {
     };
 
     const chartData = prepareChartData();
-    const colors = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b'];
+
+    // Consistent Color Mapping
+    const pathColors = {
+        "4-Year State College": "#2563eb",
+        "Trade School (2-year)": "#16a34a",
+        "Military → GI Bill → College": "#dc2626",
+        "Work Now": "#9333ea",
+        "Community College → Transfer": "#0891b2",
+        "Nursing Associate → RN Bridge": "#d97706",
+        "Apprenticeship Path": "#059669",
+        "Military Enlistment": "#7c3aed"
+    };
+
+    const fallbackColors = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+    const getPathColor = (pathName, index) => {
+        return pathColors[pathName] || fallbackColors[index % fallbackColors.length];
+    };
 
     // Helper to get path details
     const getPathDetails = (id) => availablePaths.find(p => p.id === id);
@@ -285,7 +302,7 @@ const CareerPathExplorer = () => {
                             {selectedPathIds.map((id, idx) => {
                                 const path = getPathDetails(id);
                                 if (!path) return null;
-                                const borderColor = colors[idx % colors.length];
+                                const borderColor = getPathColor(path.name, idx);
 
                                 return (
                                     <div key={id} className="shadow-md p-4 rounded-lg border-l-4" style={{ borderColor }}>
@@ -356,7 +373,7 @@ const CareerPathExplorer = () => {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {results.paths.map((path, idx) => (
-                            <div key={path.id} className="bg-white rounded-xl shadow p-4 border-t-4" style={{ borderColor: colors[idx % colors.length] }}>
+                            <div key={path.id} className="bg-white rounded-xl shadow p-4 border-t-4" style={{ borderColor: getPathColor(path.name, idx) }}>
                                 <h3 className="font-bold text-gray-800 mb-2 truncate" title={path.name}>{path.name}</h3>
                                 <div className="space-y-1 text-sm">
                                     <div className="flex justify-between">
@@ -380,7 +397,7 @@ const CareerPathExplorer = () => {
 
                     {/* Cumulative Net Cash Chart */}
                     <div className="bg-white rounded-xl shadow-md p-6">
-                        <div className="flex justify-between items-start mb-6">
+                        <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="text-xl font-bold text-gray-800">Cumulative Net Cash</h3>
                                 <p className="text-gray-500 text-sm mt-1">
@@ -389,26 +406,63 @@ const CareerPathExplorer = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="h-80">
+
+                        {/* Custom Legend */}
+                        <div className="flex gap-4 items-center flex-wrap py-2 mb-4">
+                            {results.paths.map((path, idx) => (
+                                <div key={path.id} className="flex items-center gap-2">
+                                    <div
+                                        className="w-3 h-3 rounded-full"
+                                        style={{ backgroundColor: getPathColor(path.name, idx) }}
+                                    />
+                                    <span className="text-sm text-gray-700">{path.name}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="h-[350px] py-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="year" />
+                                    <XAxis
+                                        dataKey="year"
+                                        label={{ value: 'Years', position: 'insideBottom', offset: -5, style: { fontSize: 14 } }}
+                                        style={{ fontSize: 12 }}
+                                    />
                                     <YAxis
-                                        tickFormatter={(value) => `$${value / 1000}k`}
+                                        label={{ value: 'Dollars ($)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }}
+                                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                                        style={{ fontSize: 12 }}
                                     />
                                     <Tooltip
-                                        formatter={(value) => `$${value.toLocaleString()}`}
-                                        labelStyle={{ color: '#374151' }}
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+                                                        <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                                                        {payload.map((entry, index) => (
+                                                            <div key={index} className="text-sm">
+                                                                <span style={{ color: entry.color }} className="font-medium">
+                                                                    {entry.name}:
+                                                                </span>
+                                                                <span className="ml-2">
+                                                                    ${entry.value.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
                                     />
-                                    <Legend />
                                     {results.paths.map((path, idx) => (
                                         <Line
                                             key={path.id}
                                             type="monotone"
                                             dataKey={`${path.id}_netCash`}
                                             name={path.name}
-                                            stroke={colors[idx % colors.length]}
+                                            stroke={getPathColor(path.name, idx)}
                                             strokeWidth={3}
                                             dot={{ r: 4 }}
                                         />
@@ -421,27 +475,64 @@ const CareerPathExplorer = () => {
                     {/* Yearly Income Chart */}
                     <div className="bg-white rounded-xl shadow-md p-6">
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Yearly Income</h3>
-                        <p className="text-gray-500 text-sm mb-6">Annual earnings before tax and expenses.</p>
-                        <div className="h-80">
+                        <p className="text-gray-500 text-sm mb-4">Annual earnings before tax and expenses.</p>
+
+                        {/* Custom Legend */}
+                        <div className="flex gap-4 items-center flex-wrap py-2 mb-4">
+                            {results.paths.map((path, idx) => (
+                                <div key={path.id} className="flex items-center gap-2">
+                                    <div
+                                        className="w-3 h-3 rounded-full"
+                                        style={{ backgroundColor: getPathColor(path.name, idx) }}
+                                    />
+                                    <span className="text-sm text-gray-700">{path.name}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="h-[350px] py-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="year" />
+                                    <XAxis
+                                        dataKey="year"
+                                        label={{ value: 'Years', position: 'insideBottom', offset: -5, style: { fontSize: 14 } }}
+                                        style={{ fontSize: 12 }}
+                                    />
                                     <YAxis
-                                        tickFormatter={(value) => `$${value / 1000}k`}
+                                        label={{ value: 'Dollars ($)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }}
+                                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                                        style={{ fontSize: 12 }}
                                     />
                                     <Tooltip
-                                        formatter={(value) => `$${value.toLocaleString()}`}
-                                        labelStyle={{ color: '#374151' }}
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+                                                        <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                                                        {payload.map((entry, index) => (
+                                                            <div key={index} className="text-sm">
+                                                                <span style={{ color: entry.color }} className="font-medium">
+                                                                    {entry.name}:
+                                                                </span>
+                                                                <span className="ml-2">
+                                                                    ${entry.value.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
                                     />
-                                    <Legend />
                                     {results.paths.map((path, idx) => (
                                         <Line
                                             key={path.id}
                                             type="monotone"
                                             dataKey={`${path.id}_income`}
                                             name={path.name}
-                                            stroke={colors[idx % colors.length]}
+                                            stroke={getPathColor(path.name, idx)}
                                             strokeWidth={3}
                                             dot={{ r: 4 }}
                                         />
