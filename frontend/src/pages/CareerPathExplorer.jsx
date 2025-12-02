@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { compareCareerPaths } from '../api/financeApi';
+import React, { useState, useEffect } from 'react';
+import { compareCareerPaths, getCareerPathTemplates } from '../api/financeApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const CareerPathExplorer = () => {
@@ -12,23 +12,29 @@ const CareerPathExplorer = () => {
     });
 
     // Section 2: Path Selection
-    const availablePaths = [
-        { id: 'college_4yr_state', name: '4-Year State College' },
-        { id: 'trade_school_2yr', name: 'Trade School (2-year)' },
-        { id: 'military_enlist', name: 'Military Enlistment' },
-        { id: 'work_now', name: 'Work Now' },
-        { id: 'community_college_transfer', name: 'Community College → Transfer' },
-        { id: 'nursing_assoc_rn', name: 'Nursing Associate → RN Bridge' },
-        { id: 'apprenticeship', name: 'Apprenticeship Path' },
-        { id: 'military_gi_bill_college', name: 'Military → GI Bill → College' }
-    ];
-
+    const [availablePaths, setAvailablePaths] = useState([]);
     const [selectedPathIds, setSelectedPathIds] = useState([]);
 
     // Section 3: Results
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Fetch templates on mount
+    useEffect(() => {
+        const fetchTemplates = async () => {
+            try {
+                const response = await getCareerPathTemplates();
+                if (response.success) {
+                    setAvailablePaths(response.data);
+                }
+            } catch (err) {
+                console.error("Failed to load path templates", err);
+                setError("Failed to load career path options.");
+            }
+        };
+        fetchTemplates();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -107,6 +113,68 @@ const CareerPathExplorer = () => {
     const chartData = prepareChartData();
     const colors = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b'];
 
+    // Helper to get path details
+    const getPathDetails = (id) => availablePaths.find(p => p.id === id);
+
+    // Compute Recommendations
+    const computeRecommendations = () => {
+        if (!results || !results.paths || results.paths.length === 0) return null;
+
+        const pathsWithMetrics = results.paths.map(path => {
+            const netCash10 = path.summary.netCashAtHorizon;
+            const breakEvenYear = path.breakEvenYear || Infinity;
+            const pathDetails = getPathDetails(path.id);
+            const educationCost = pathDetails?.educationCost || 0;
+
+            return {
+                ...path,
+                netCash10,
+                breakEvenYear,
+                educationCost
+            };
+        });
+
+        // Find best overall (highest net cash at Year 10)
+        let bestOverall = pathsWithMetrics[0];
+        for (const path of pathsWithMetrics) {
+            if (path.netCash10 > bestOverall.netCash10) {
+                bestOverall = path;
+            } else if (path.netCash10 === bestOverall.netCash10) {
+                // Tie-breaker: faster break-even
+                if (path.breakEvenYear < bestOverall.breakEvenYear) {
+                    bestOverall = path;
+                } else if (path.breakEvenYear === bestOverall.breakEvenYear) {
+                    // Tie-breaker: lower education cost
+                    if (path.educationCost < bestOverall.educationCost) {
+                        bestOverall = path;
+                    }
+                }
+            }
+        }
+
+        // Find fastest break-even
+        let fastestBreakEven = pathsWithMetrics[0];
+        for (const path of pathsWithMetrics) {
+            if (path.breakEvenYear < fastestBreakEven.breakEvenYear) {
+                fastestBreakEven = path;
+            } else if (path.breakEvenYear === fastestBreakEven.breakEvenYear) {
+                // Tie-breaker: higher net cash
+                if (path.netCash10 > fastestBreakEven.netCash10) {
+                    fastestBreakEven = path;
+                } else if (path.netCash10 === fastestBreakEven.netCash10) {
+                    // Tie-breaker: lower education cost
+                    if (path.educationCost < fastestBreakEven.educationCost) {
+                        fastestBreakEven = path;
+                    }
+                }
+            }
+        }
+
+        return { bestOverall, fastestBreakEven };
+    };
+
+    const recommendations = computeRecommendations();
+
     return (
         <div className="space-y-8 pb-12">
             {/* Header */}
@@ -170,8 +238,8 @@ const CareerPathExplorer = () => {
                             key={path.id}
                             onClick={() => togglePathSelection(path.id)}
                             className={`cursor-pointer p-4 rounded-lg border-2 transition-all ${selectedPathIds.includes(path.id)
-                                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                                    : 'border-gray-200 hover:border-blue-300'
+                                ? 'border-blue-500 bg-blue-50 shadow-md'
+                                : 'border-gray-200 hover:border-blue-300'
                                 }`}
                         >
                             <div className="flex items-center space-x-3">
@@ -209,6 +277,82 @@ const CareerPathExplorer = () => {
             {/* Section 3: Results */}
             {results && (
                 <div className="space-y-6 animate-fade-in">
+
+                    {/* Path Details Cards */}
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Path Details</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {selectedPathIds.map((id, idx) => {
+                                const path = getPathDetails(id);
+                                if (!path) return null;
+                                const borderColor = colors[idx % colors.length];
+
+                                return (
+                                    <div key={id} className="shadow-md p-4 rounded-lg border-l-4" style={{ borderColor }}>
+                                        <h3 className="text-lg font-bold text-gray-800 mb-3">{path.name}</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Education Cost:</span>
+                                                <span className="font-medium">${path.educationCost.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Years of School:</span>
+                                                <span className="font-medium">{path.yearsOfSchool} years</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Starting Salary:</span>
+                                                <span className="font-medium">${path.startingSalary.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Salary Growth:</span>
+                                                <span className="font-medium">{(path.salaryGrowthRate * 100).toFixed(1)}%</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Lifestyle Cost:</span>
+                                                <span className="font-medium">${path.livingCost.toLocaleString()}/mo</span>
+                                            </div>
+                                            {path.hasGiBill && (
+                                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                                    <span className="block text-xs font-semibold text-blue-600 uppercase tracking-wide">GI Bill / Benefits</span>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Housing: ${path.militaryBenefits?.housingOffset}/mo <br />
+                                                        Tuition: ${path.militaryBenefits?.tuitionCoverage}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {path.notes && (
+                                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                                    <p className="text-xs text-gray-500 italic">"{path.notes}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Recommended Path */}
+                    {recommendations && (
+                        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mb-6">
+                            <h3 className="text-lg font-bold text-blue-900 mb-2">Recommended Path</h3>
+                            <div className="text-blue-800">
+                                <p className="mb-1">
+                                    <span className="font-semibold">{recommendations.bestOverall.name}</span> is the strongest long-term financial choice,
+                                    {recommendations.bestOverall.breakEvenYear !== Infinity
+                                        ? `breaking even by Year ${recommendations.bestOverall.breakEvenYear}`
+                                        : 'though it may not break even within 10 years'
+                                    } and ending with <span className="font-semibold">${recommendations.bestOverall.netCash10.toLocaleString()}</span> by Year 10.
+                                </p>
+                                {recommendations.fastestBreakEven.id !== recommendations.bestOverall.id && recommendations.fastestBreakEven.breakEvenYear !== Infinity && (
+                                    <p className="text-sm">
+                                        <span className="font-semibold">{recommendations.fastestBreakEven.name}</span> reaches financial break-even the fastest at Year {recommendations.fastestBreakEven.breakEvenYear}.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {results.paths.map((path, idx) => (
