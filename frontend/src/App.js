@@ -11,7 +11,9 @@ import TaxBenefits from './pages/TaxBenefits';
 import OpportunityCost from './pages/OpportunityCost';
 import InvestmentTracker from './pages/InvestmentTracker';
 import GoalPlanner from './pages/GoalPlanner';
+
 import Settings from './pages/Settings';
+import CareerPathExplorer from './pages/CareerPathExplorer';
 import { ProfileProvider } from './context/ProfileContext';
 
 function App() {
@@ -31,7 +33,9 @@ function App() {
                         <Route path="opportunity-cost" element={<OpportunityCost />} />
                         <Route path="investments" element={<InvestmentTracker />} />
                         <Route path="goal-planner" element={<GoalPlanner />} />
+                        <Route path="goal-planner" element={<GoalPlanner />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="career-path-explorer" element={<CareerPathExplorer />} />
                     </Route>
                 </Routes>
             </Router>

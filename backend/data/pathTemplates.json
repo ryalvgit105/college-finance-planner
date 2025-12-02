@@ -1,0 +1,122 @@
+[
+    {
+        "id": "college_4yr_state",
+        "name": "4-Year State College",
+        "educationCost": 80000,
+        "yearsOfSchool": 4,
+        "startingSalary": 52000,
+        "salaryGrowthRate": 0.04,
+        "livingCost": 1800,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "Tuition + basic living near a state school"
+    },
+    {
+        "id": "trade_school_2yr",
+        "name": "Trade School (2-year)",
+        "educationCost": 30000,
+        "yearsOfSchool": 2,
+        "startingSalary": 45000,
+        "salaryGrowthRate": 0.03,
+        "livingCost": 1500,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "Vocational training with faster entry to workforce"
+    },
+    {
+        "id": "military_enlist",
+        "name": "Military Enlistment",
+        "educationCost": 0,
+        "yearsOfSchool": 0,
+        "startingSalary": 35000,
+        "salaryGrowthRate": 0.05,
+        "livingCost": 500,
+        "hasGiBill": true,
+        "militaryBenefits": {
+            "housingOffset": 1500,
+            "tuitionCoverage": 0
+        },
+        "notes": "Enlist immediately. Low living costs due to housing allowance."
+    },
+    {
+        "id": "work_now",
+        "name": "Work Now (Direct Workforce)",
+        "educationCost": 0,
+        "yearsOfSchool": 0,
+        "startingSalary": 30000,
+        "salaryGrowthRate": 0.02,
+        "livingCost": 1800,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "Enter workforce immediately with no further education."
+    },
+    {
+        "id": "community_college_transfer",
+        "name": "Community College → Transfer",
+        "educationCost": 50000,
+        "yearsOfSchool": 4,
+        "startingSalary": 52000,
+        "salaryGrowthRate": 0.04,
+        "livingCost": 1200,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "2 years CC (cheaper) + 2 years State College."
+    },
+    {
+        "id": "nursing_assoc_rn",
+        "name": "Nursing Associate → RN Bridge",
+        "educationCost": 40000,
+        "yearsOfSchool": 3,
+        "startingSalary": 65000,
+        "salaryGrowthRate": 0.035,
+        "livingCost": 1600,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "ADN degree then work as RN."
+    },
+    {
+        "id": "apprenticeship",
+        "name": "Apprenticeship Path",
+        "educationCost": 5000,
+        "yearsOfSchool": 4,
+        "startingSalary": 40000,
+        "salaryGrowthRate": 0.06,
+        "livingCost": 1800,
+        "hasGiBill": false,
+        "militaryBenefits": {
+            "housingOffset": 0,
+            "tuitionCoverage": 0
+        },
+        "notes": "Earn while you learn. Low cost, steady salary growth."
+    },
+    {
+        "id": "military_gi_bill_college",
+        "name": "Military → GI Bill → College",
+        "educationCost": 0,
+        "yearsOfSchool": 4,
+        "startingSalary": 55000,
+        "salaryGrowthRate": 0.04,
+        "livingCost": 1000,
+        "hasGiBill": true,
+        "militaryBenefits": {
+            "housingOffset": 2000,
+            "tuitionCoverage": 100000
+        },
+        "notes": "4 years service (not modeled as school, but delay) then College paid by GI Bill. Modeled here as: 4 years 'school' (service) with income, then 4 years college (free), then work? Or simplified: Service is 'work' phase, then college? The prompt says: 'Enlist for a few years... Then GI Bill covers most or all tuition later.' I will model this as: Years 1-4: Military Service (Work). Years 5-8: College (School, but covered). Year 9+: Work. To fit the simple simulator, I might need to tweak the 'yearsOfSchool' logic or just represent it as a specific flow in the simulator if needed, but for now I'll stick to the standard template fields and maybe use a custom flag or just average it out. Actually, let's define it as: 4 years service (low income, low cost), then 4 years school (covered cost, stipend), then work. This is complex for a simple 'yearsOfSchool' param. I'll approximate: 4 years 'school' (service) where cost is negative (income)? No, let's just set yearsOfSchool=4 (College phase) but delay it? For this prototype, I'll set yearsOfSchool=8 (4 service + 4 college) but gives income during service? Let's stick to the prompt's 'simple' model. I'll define it as 4 years of 'Pre-Career' (Service) + 4 years School. Total 8 years before 'Starting Salary' of grad? That seems too long to wait for charts. Let's model it as: 4 years 'School' (Service) where cost is 0 and you get paid? Actually, the prompt says 'Enlist for a few years with modest income... Then GI Bill'. I'll set yearsOfSchool = 4 (representing the college part) but with a 'delay' parameter? The template doesn't have 'delay'. I'll stick to a simplified version: 4 years of Military Service IS the 'school' phase in terms of time, but you make money. Then you go to college? Let's just make it a 4-year path where you work in military, then maybe do online school? No, 'Military -> GI Bill -> College' implies sequence. I will define it as: yearsOfSchool: 4 (The college part). But wait, when do you do it? If I put yearsOfSchool=4, the sim assumes it's the *first* 4 years. \n\nAlternative: The 'Military Enlistment' path is just staying in. 'Military -> GI Bill -> College' is a hybrid. I will define it as: yearsOfSchool=4 (College), but I'll add a 'startDelay': 4 (Service years). But the simulator function signature is simple. \n\nLet's just model 'Military -> GI Bill -> College' as: \nYears 1-4: Military Income (handled as 'negative education cost' or special logic?)\nYears 5-8: College (Covered)\nYears 9+: Grad Salary.\n\nTo keep the simulator simple and generic as requested ('years in school -> low/zero income... After school -> startingSalary'), I will model this path as having 8 years of 'school' (pre-work) phase, but during the first 4 years (Service), the 'educationCost' is actually negative (income) and living cost is low. \n\nLet's try: \nEducation Cost: -120000 (You earn ~30k/yr for 4 years)\nYears of School: 8 (4 service + 4 college)\nStarting Salary: 55000 (Post-college)\n\nThis is a hack but fits the 'Years in school = educationCost' model if I allow negative cost. \nLet's assume the simulator subtracts educationCost. So `Cost = -120000` means `Net = +120000`. \nDistributed over 8 years? That's 15k/yr income. Plus living cost. \n\nActually, better approach for V2 prototype: \nJust model the 'College' part as the 'School' phase, but assume you have 'Starting Savings' from the military service? No, that's user input. \n\nLet's stick to the prompt's 'simple' instructions. I will define it as 4 years of school (College), but with `educationCost: 0` (GI Bill) and maybe a `stipend`? \n\nI'll add a `stipend` field to the template or `militaryBenefits`. \n\nFor now, I'll use: \nyearsOfSchool: 4 \neducationCost: 0 \nstartingSalary: 55000 \n\nAnd I'll add a note that this assumes the user has already completed service or does it concurrently? No, 'Military -> GI Bill' implies sequence. \n\nLet's go with the 8-year model for accuracy in 'time to career':\nyearsOfSchool: 8\neducationCost: -100000 (Net earnings during 4y service + 4y GI Bill stipend - tuition)\nstartingSalary: 60000\n\nThis is the most robust way to use a simple 'school vs work' toggle without changing the engine logic too much. \n\nWait, `yearsOfSchool` determines when `startingSalary` kicks in. \nIf I say 8 years, then for 8 years they pay `educationCost / 8` and pay `livingCost`. \nIf `educationCost` is negative, they make money. \n\nLet's use: \n`educationCost`: -80000 (Approx savings/earnings over 4y service + 4y college stipend)\n`yearsOfSchool`: 8\n`startingSalary`: 60000\n`livingCost`: 1200\n\nThis seems reasonable for a prototype approximation."
+    }
+]

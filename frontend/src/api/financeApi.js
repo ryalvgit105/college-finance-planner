@@ -318,3 +318,14 @@ export const deleteInvestment = async (id) => {
         throw error;
     }
 };
+
+// Career Path API (V2)
+export const compareCareerPaths = async (payload) => {
+    try {
+        const response = await api.post('/api/career-paths/compare', payload);
+        return response.data;
+    } catch (error) {
+        console.error('Error comparing career paths:', error);
+        throw error;
+    }
+};

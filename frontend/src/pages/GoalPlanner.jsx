@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { getDashboardSummary } from '../api/financeApi';
-import { LuTarget, LuAlertTriangle, LuCheckCircle } from 'react-icons/lu';
+import { LuTriangleAlert, LuCircleCheck } from 'react-icons/lu';
 
 const GoalPlanner = () => {
     const { currentProfile } = useProfile();
@@ -35,7 +35,7 @@ const GoalPlanner = () => {
             {/* Shortfall Alert */}
             {shortfall > 0 ? (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded flex items-start space-x-3">
-                    <LuAlertTriangle className="text-red-500 mt-1" size={24} />
+                    <LuTriangleAlert className="text-red-500 mt-1" size={24} />
                     <div>
                         <h3 className="font-bold text-red-800">Funding Shortfall Detected</h3>
                         <p className="text-red-700">
@@ -46,7 +46,7 @@ const GoalPlanner = () => {
                 </div>
             ) : (
                 <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded flex items-center space-x-3">
-                    <LuCheckCircle className="text-green-500" size={24} />
+                    <LuCircleCheck className="text-green-500" size={24} />
                     <div>
                         <h3 className="font-bold text-green-800">Fully Funded</h3>
                         <p className="text-green-700">Your current income is sufficient to fund all goals.</p>
@@ -71,8 +71,8 @@ const GoalPlanner = () => {
                             <tr key={goal.goalId}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${goal.priority >= 4 ? 'bg-red-100 text-red-800' :
-                                            goal.priority >= 3 ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-blue-100 text-blue-800'
+                                        goal.priority >= 3 ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-blue-100 text-blue-800'
                                         }`}>
                                         P{goal.priority}
                                     </span>
@@ -83,11 +83,11 @@ const GoalPlanner = () => {
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {goal.shortfall > 1 ? (
                                         <span className="text-red-500 text-sm flex items-center">
-                                            <LuAlertTriangle className="mr-1" size={14} /> -${goal.shortfall.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                            <LuTriangleAlert className="mr-1" size={14} /> -${goal.shortfall.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </span>
                                     ) : (
                                         <span className="text-green-500 text-sm flex items-center">
-                                            <LuCheckCircle className="mr-1" size={14} /> On Track
+                                            <LuCircleCheck className="mr-1" size={14} /> On Track
                                         </span>
                                     )}
                                 </td>

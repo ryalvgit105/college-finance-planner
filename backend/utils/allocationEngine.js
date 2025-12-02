@@ -15,7 +15,6 @@ const calculateAllocations = (goals, netMonthlyIncome) => {
         // Simple FV formula if return rate > 0? 
         // Prompt says "Determine neededMonthlyContribution". 
         // For simplicity in allocation engine, let's use linear: Amount / Months.
-        // We can refine with expectedReturnRate later if needed, but linear is safer for "needs".
         const neededMonthly = amountNeeded / monthsRemaining;
 
         return {
@@ -32,19 +31,37 @@ const calculateAllocations = (goals, netMonthlyIncome) => {
     goalNeeds.sort((a, b) => {
         if (b.priority !== a.priority) {
             return b.priority - a.priority;
+        }
+        return new Date(a.targetDate) - new Date(b.targetDate);
+    });
 
-            return {
-                allocations: goalNeeds.map(g => ({
-                    goalId: g._id,
-                    goalName: g.goalName,
-                    needed: g.neededMonthlyContribution,
-                    allocated: g.allocatedAmount,
-                    shortfall: g.shortfall,
-                    priority: g.priority
-                })),
-                totalShortfall,
-                remainingIncome // Surplus
-            };
-        };
+    // 3. Allocate Income
+    goalNeeds.forEach(goal => {
+        if (remainingIncome > 0) {
+            const allocation = Math.min(remainingIncome, goal.neededMonthlyContribution);
+            goal.allocatedAmount = allocation;
+            remainingIncome -= allocation;
+        } else {
+            goal.allocatedAmount = 0;
+        }
 
-        module.exports = { calculateAllocations };
+        // Calculate Shortfall
+        goal.shortfall = Math.max(0, goal.neededMonthlyContribution - goal.allocatedAmount);
+        totalShortfall += goal.shortfall;
+    });
+
+    return {
+        allocations: goalNeeds.map(g => ({
+            goalId: g._id,
+            goalName: g.goalName,
+            needed: g.neededMonthlyContribution,
+            allocated: g.allocatedAmount,
+            shortfall: g.shortfall,
+            priority: g.priority
+        })),
+        totalShortfall,
+        remainingIncome // Surplus
+    };
+};
+
+module.exports = { calculateAllocations };
