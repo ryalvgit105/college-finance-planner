@@ -396,15 +396,7 @@ const CareerPathExplorer = () => {
             {/* Section 2: Pick paths */}
             <h2 className="text-xl font-semibold mt-8 mb-2">Choose Your Paths</h2>
             <div className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800">Pick 2–4 paths to compare</h3>
-                    <button
-                        onClick={loadDemoPreset}
-                        className="text-sm bg-gray-100 hover:bg-gray-200 rounded px-4 py-2 font-medium"
-                    >
-                        Load Demo Preset
-                    </button>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">Pick 2–4 paths to compare</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {availablePaths.map(path => (
