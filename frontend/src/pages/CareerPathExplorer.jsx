@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { compareCareerPaths, getCareerPathTemplates } from '../api/financeApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -20,6 +20,12 @@ const CareerPathExplorer = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Validation errors
+    const [validationErrors, setValidationErrors] = useState({});
+
+    // Ref for smooth scrolling to results
+    const resultsRef = useRef(null);
+
     // Fetch templates on mount
     useEffect(() => {
         const fetchTemplates = async () => {
@@ -38,10 +44,41 @@ const CareerPathExplorer = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        const numValue = name === 'riskTolerance' ? value : Number(value);
+
         setUserInputs(prev => ({
             ...prev,
-            [name]: name === 'riskTolerance' ? value : Number(value)
+            [name]: numValue
         }));
+
+        // Validate on change
+        const errors = { ...validationErrors };
+
+        if (name === 'age') {
+            if (numValue < 14 || numValue > 65) {
+                errors.age = 'Age must be between 14 and 65';
+            } else {
+                delete errors.age;
+            }
+        }
+
+        if (name === 'startingSavings') {
+            if (numValue < 0) {
+                errors.startingSavings = 'Savings cannot be negative';
+            } else {
+                delete errors.startingSavings;
+            }
+        }
+
+        if (name === 'monthlyLifestyleCost') {
+            if (numValue <= 0) {
+                errors.monthlyLifestyleCost = 'Lifestyle cost must be greater than 0';
+            } else {
+                delete errors.monthlyLifestyleCost;
+            }
+        }
+
+        setValidationErrors(errors);
     };
 
     const togglePathSelection = (pathId) => {
@@ -63,16 +100,36 @@ const CareerPathExplorer = () => {
             riskTolerance: 'medium'
         });
         setSelectedPathIds(['college_4yr_state', 'trade_school_2yr', 'military_gi_bill_college']);
+        setValidationErrors({}); // Clear any validation errors
     };
 
     const handleCompare = async () => {
+        // Validate inputs
+        const errors = {};
+
+        if (userInputs.age < 14 || userInputs.age > 65) {
+            errors.age = 'Age must be between 14 and 65';
+        }
+        if (userInputs.startingSavings < 0) {
+            errors.startingSavings = 'Savings cannot be negative';
+        }
+        if (userInputs.monthlyLifestyleCost <= 0) {
+            errors.monthlyLifestyleCost = 'Lifestyle cost must be greater than 0';
+        }
         if (selectedPathIds.length < 2) {
-            setError("Please select at least 2 paths to compare.");
+            errors.paths = 'Please select at least 2 paths to compare';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            setError("Please fix the validation errors before comparing.");
             return;
         }
 
         setLoading(true);
         setError(null);
+        setValidationErrors({});
+
         try {
             const response = await compareCareerPaths({
                 userInputs,
@@ -82,6 +139,10 @@ const CareerPathExplorer = () => {
 
             if (response.success) {
                 setResults(response.data);
+                // Smooth scroll to results
+                setTimeout(() => {
+                    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
             } else {
                 setError("Failed to load comparison data.");
             }
@@ -201,9 +262,9 @@ const CareerPathExplorer = () => {
             </div>
 
             {/* Section 1: Tell us about you */}
+            <h2 className="text-xl font-semibold mt-8 mb-2">Tell Us About You</h2>
             <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">1. Tell us about you</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Current Age</label>
                         <input
@@ -211,8 +272,12 @@ const CareerPathExplorer = () => {
                             name="age"
                             value={userInputs.age}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.age ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {validationErrors.age && (
+                            <p className="text-red-600 text-sm mt-1">{validationErrors.age}</p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Current Savings ($)</label>
@@ -221,8 +286,12 @@ const CareerPathExplorer = () => {
                             name="startingSavings"
                             value={userInputs.startingSavings}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.startingSavings ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {validationErrors.startingSavings && (
+                            <p className="text-red-600 text-sm mt-1">{validationErrors.startingSavings}</p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Lifestyle Cost ($)</label>
@@ -231,19 +300,24 @@ const CareerPathExplorer = () => {
                             name="monthlyLifestyleCost"
                             value={userInputs.monthlyLifestyleCost}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationErrors.monthlyLifestyleCost ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {validationErrors.monthlyLifestyleCost && (
+                            <p className="text-red-600 text-sm mt-1">{validationErrors.monthlyLifestyleCost}</p>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Section 2: Pick paths */}
+            <h2 className="text-xl font-semibold mt-8 mb-2">Choose Your Paths</h2>
             <div className="bg-white rounded-xl shadow-md p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">2. Pick 2–4 paths to compare</h2>
+                    <h3 className="text-lg font-semibold text-gray-800">Pick 2–4 paths to compare</h3>
                     <button
                         onClick={loadDemoPreset}
-                        className="text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1 rounded-full"
+                        className="text-sm bg-gray-100 hover:bg-gray-200 rounded px-4 py-2 font-medium"
                     >
                         Load Demo Preset
                     </button>
@@ -274,11 +348,15 @@ const CareerPathExplorer = () => {
                     ))}
                 </div>
 
-                <div className="flex justify-center">
+                {validationErrors.paths && (
+                    <p className="text-red-600 text-sm mb-4 text-center">{validationErrors.paths}</p>
+                )}
+
+                <div className="flex justify-center mt-4 mb-6">
                     <button
                         onClick={handleCompare}
-                        disabled={loading || selectedPathIds.length < 2}
-                        className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform transition hover:scale-105"
+                        disabled={loading || Object.keys(validationErrors).length > 0}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform transition hover:scale-105"
                     >
                         {loading ? 'Simulating...' : 'Compare Paths'}
                     </button>
@@ -293,9 +371,10 @@ const CareerPathExplorer = () => {
 
             {/* Section 3: Results */}
             {results && (
-                <div className="space-y-6 animate-fade-in">
+                <div ref={resultsRef} className="space-y-6 animate-fade-in">
 
                     {/* Path Details Cards */}
+                    <h2 className="text-xl font-semibold mt-8 mb-2">Path Details</h2>
                     <div className="bg-white rounded-xl shadow-md p-6">
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Path Details</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -350,6 +429,7 @@ const CareerPathExplorer = () => {
                     </div>
 
                     {/* Recommended Path */}
+                    <h2 className="text-xl font-semibold mt-8 mb-2">Recommended Path</h2>
                     {recommendations && (
                         <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mb-6">
                             <h3 className="text-lg font-bold text-blue-900 mb-2">Recommended Path</h3>
@@ -371,6 +451,7 @@ const CareerPathExplorer = () => {
                     )}
 
                     {/* Summary Cards */}
+                    <h2 className="text-xl font-semibold mt-8 mb-2">Your Tradeoffs</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {results.paths.map((path, idx) => (
                             <div key={path.id} className="bg-white rounded-xl shadow p-4 border-t-4" style={{ borderColor: getPathColor(path.name, idx) }}>
