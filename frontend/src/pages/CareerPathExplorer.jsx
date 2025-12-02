@@ -26,33 +26,6 @@ const CareerPathExplorer = () => {
     // Ref for smooth scrolling to results
     const resultsRef = useRef(null);
 
-    // Demo preset selector
-    const [selectedPreset, setSelectedPreset] = useState('');
-
-    // Demo preset configurations
-    const demoPresets = {
-        'high-school-senior': {
-            name: 'High School Senior — College vs Trade vs Military',
-            inputs: { age: 18, startingSavings: 2000, monthlyLifestyleCost: 1200, riskTolerance: 'medium' },
-            paths: ['college_4yr_state', 'trade_school_2yr', 'military_gi_bill_college']
-        },
-        'career-changer': {
-            name: 'Career Changer (Age 30)',
-            inputs: { age: 30, startingSavings: 15000, monthlyLifestyleCost: 2000, riskTolerance: 'medium' },
-            paths: ['trade_school_2yr', 'community_college_transfer', 'work_now']
-        },
-        'military-gi-bill': {
-            name: 'Military → GI Bill → College',
-            inputs: { age: 22, startingSavings: 10000, monthlyLifestyleCost: 1500, riskTolerance: 'low' },
-            paths: ['military_gi_bill_college', 'college_4yr_state', 'trade_school_2yr']
-        },
-        'work-vs-apprentice': {
-            name: 'Work Now vs Apprenticeship',
-            inputs: { age: 18, startingSavings: 500, monthlyLifestyleCost: 1000, riskTolerance: 'high' },
-            paths: ['work_now', 'apprenticeship', 'trade_school_2yr']
-        }
-    };
-
     // Fetch templates on mount
     useEffect(() => {
         const fetchTemplates = async () => {
@@ -113,54 +86,11 @@ const CareerPathExplorer = () => {
             if (prev.includes(pathId)) {
                 return prev.filter(id => id !== pathId);
             } else {
-                if (prev.length >= 4) return prev; // Max 4
-                return [...prev, pathId];
+                return [...prev, pathId]; // Unlimited paths
             }
         });
     };
 
-    const loadPreset = async (presetKey) => {
-        if (!presetKey || !demoPresets[presetKey]) return;
-
-        const preset = demoPresets[presetKey];
-
-        // Populate inputs
-        setUserInputs(preset.inputs);
-
-        // Select paths
-        setSelectedPathIds(preset.paths);
-
-        // Clear validation errors
-        setValidationErrors({});
-        setError(null);
-
-        // Auto-run comparison after a brief delay to ensure state updates
-        setTimeout(async () => {
-            setLoading(true);
-            try {
-                const response = await compareCareerPaths({
-                    userInputs: preset.inputs,
-                    selectedPathIds: preset.paths,
-                    horizonYears: 10
-                });
-
-                if (response.success) {
-                    setResults(response.data);
-                    // Smooth scroll to results
-                    setTimeout(() => {
-                        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                } else {
-                    setError("Failed to load comparison data.");
-                }
-            } catch (err) {
-                console.error(err);
-                setError("We couldn't compare those paths. Check your numbers and try again.");
-            } finally {
-                setLoading(false);
-            }
-        }, 300);
-    };
 
     const handleCompare = async () => {
         // Validate inputs
@@ -320,30 +250,6 @@ const CareerPathExplorer = () => {
                 <p className="text-xl opacity-90">Compare college, trades, military, and work-now paths with real numbers.</p>
             </div>
 
-            {/* Demo Scenarios */}
-            <h2 className="text-xl font-semibold mt-8 mb-2">Demo Scenarios</h2>
-            <div className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                    <select
-                        value={selectedPreset}
-                        onChange={(e) => setSelectedPreset(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-w-[300px]"
-                    >
-                        <option value="">Select a demo scenario...</option>
-                        {Object.entries(demoPresets).map(([key, preset]) => (
-                            <option key={key} value={key}>{preset.name}</option>
-                        ))}
-                    </select>
-                    <button
-                        onClick={() => loadPreset(selectedPreset)}
-                        disabled={!selectedPreset || loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform transition hover:scale-105"
-                    >
-                        {loading ? 'Loading...' : 'Load Preset'}
-                    </button>
-                </div>
-            </div>
-
             {/* Section 1: Tell us about you */}
             <h2 className="text-xl font-semibold mt-8 mb-2">Tell Us About You</h2>
             <div className="bg-white rounded-xl shadow-md p-6">
@@ -396,7 +302,7 @@ const CareerPathExplorer = () => {
             {/* Section 2: Pick paths */}
             <h2 className="text-xl font-semibold mt-8 mb-2">Choose Your Paths</h2>
             <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">Pick 2–4 paths to compare</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">Pick 2 or more paths to compare</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {availablePaths.map(path => (
