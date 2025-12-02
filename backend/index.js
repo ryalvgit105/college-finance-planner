@@ -70,6 +70,7 @@ app.use('/api/benefits', benefitsRoutes);
 app.use('/api/opportunity', opportunityCostRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/career-paths', require('./routes/careerPathsRoutes'));
+app.use('/api/career-advisor', require('./routes/careerAdvisorRoutes'));
 
 // Test Routes
 app.get('/api', (req, res) => {
