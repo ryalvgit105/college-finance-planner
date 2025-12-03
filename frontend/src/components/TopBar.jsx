@@ -1,6 +1,6 @@
 import React from 'react';
 import { LuBell, LuSearch } from "react-icons/lu";
-import ProfileSwitcher from './ProfileSwitcher';
+import ProfileDropdown from './ProfileDropdown';
 
 const TopBar = () => {
     return (
@@ -26,7 +26,7 @@ const TopBar = () => {
 
                 <div className="h-8 w-px bg-gray-200 mx-2"></div>
 
-                <ProfileSwitcher />
+                <ProfileDropdown />
             </div>
         </header>
     );
