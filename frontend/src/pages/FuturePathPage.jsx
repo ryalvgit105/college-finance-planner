@@ -25,6 +25,7 @@ const MOCK_USER_DATA = {
     investments: 45000,
     debts: 28000,
     investmentReturnRate: 0.08,  // From investments, not manual
+    debtInterestRate: 0.05,  // From debts, not manual
 };
 
 const BLANK_DATA = {
@@ -34,6 +35,7 @@ const BLANK_DATA = {
     investments: 0,
     debts: 0,
     investmentReturnRate: 0.05,  // Default 5% if no investments
+    debtInterestRate: 0.05,  // Default 5% if no debts
 };
 
 // --- Components ---
@@ -102,8 +104,9 @@ export default function FuturePathPage() {
         let runningInvestments = Number(inputs.investments);
         let runningDebts = Number(inputs.debts);
 
-        // Use investment return rate from data
+        // Use investment return rate and debt interest rate from data
         const investmentReturn = Number(inputs.investmentReturnRate) || 0.05;
+        const debtInterest = Number(inputs.debtInterestRate) || 0.05;
 
         for (let i = 0; i <= projectionYears; i++) {
             const yearLabel = (currentYear + i).toString();
@@ -146,7 +149,7 @@ export default function FuturePathPage() {
                 runningInvestments = runningInvestments * (1 + investmentReturn);
 
                 if (runningDebts > 0) {
-                    runningDebts = runningDebts * 1.05;
+                    runningDebts = runningDebts * (1 + debtInterest);
                     const safetyBuffer = 10000;
                     if (runningAssets > safetyBuffer) {
                         const availableToPay = runningAssets - safetyBuffer;
