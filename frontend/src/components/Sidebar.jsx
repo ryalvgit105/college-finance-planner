@@ -9,8 +9,8 @@ const Sidebar = () => {
 
     const navItems = [
         { name: 'Dashboard', path: '/', icon: LuHouse, module: null },
-        { name: 'Career Path Explorer', path: '/career-path-explorer', icon: LuTrendingUp, module: null },
-        { name: 'Projection Sandbox (V4)', path: '/projection-v4', icon: LuTrendingUp, module: null },
+        { name: 'Career Path Explorer', path: '/career-path-explorer', icon: LuTarget, module: null },
+        { name: 'FuturePath', path: '/futurepath', icon: LuTrendingUp, module: null },
     ];
 
     const baseProfileItems = [
@@ -61,7 +61,7 @@ const Sidebar = () => {
                             className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200"
                         >
                             <span className="font-medium flex items-center">
-                                <span className="mr-3">Base Profile</span>
+                                <span className="mr-3">Current Financial Overview</span>
                             </span>
                             {isBaseProfileOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
                         </button>

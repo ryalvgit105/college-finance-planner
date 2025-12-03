@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import { ProfileProvider } from './context/ProfileContext';
-import ProjectionSandboxV4 from './pages/ProjectionSandboxV4';
+import FuturePath from './pages/FuturePath';
 
 import Goals from './pages/Goals';
 import Milestones from './pages/Milestones';
@@ -40,7 +40,7 @@ function App() {
                         <Route path="goal-planner" element={<GoalPlanner />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="career-path-explorer" element={<CareerPathExplorer />} />
-                        <Route path="projection-v4" element={<ProjectionSandboxV4 />} />
+                        <Route path="futurepath" element={<FuturePath />} />
                     </Route>
                 </Routes>
             </Router>
