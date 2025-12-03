@@ -19,25 +19,21 @@ const formatMoney = (value) => {
 };
 
 const MOCK_USER_DATA = {
-    income: 95000,
-    spending: 52000,
+    monthlyIncome: 7916.67,  // ~95k annual
+    monthlySpending: 4333.33,  // ~52k annual
     assets: 35000,
     investments: 45000,
     debts: 28000,
-    growthRate: 0.08,
-    inflationRate: 0.03,
-    salaryIncrease: 0.04,
+    investmentReturnRate: 0.08,  // From investments, not manual
 };
 
 const BLANK_DATA = {
-    income: 0,
-    spending: 0,
+    monthlyIncome: 0,
+    monthlySpending: 0,
     assets: 0,
     investments: 0,
     debts: 0,
-    growthRate: 0.07,
-    inflationRate: 0.03,
-    salaryIncrease: 0.03,
+    investmentReturnRate: 0.05,  // Default 5% if no investments
 };
 
 // --- Components ---
@@ -99,40 +95,36 @@ export default function FuturePathPage() {
         let data = [];
         let currentYear = new Date().getFullYear();
 
-        // Initialize running totals
-        let runningIncome = Number(inputs.income);
-        let runningSpending = Number(inputs.spending);
+        // Initialize running totals (convert monthly to annual for income/spending)
+        let runningAnnualIncome = Number(inputs.monthlyIncome) * 12;
+        let runningAnnualSpending = Number(inputs.monthlySpending) * 12;
         let runningAssets = Number(inputs.assets);
         let runningInvestments = Number(inputs.investments);
         let runningDebts = Number(inputs.debts);
+
+        // Use investment return rate from data
+        const investmentReturn = Number(inputs.investmentReturnRate) || 0.05;
 
         for (let i = 0; i <= projectionYears; i++) {
             const yearLabel = (currentYear + i).toString();
             const adjustment = yearlyAdjustments[i] || {};
 
-            // Determine Rates for this specific year (Global vs Override)
-            const currentSalaryInc = adjustment.salaryIncrease !== undefined ? adjustment.salaryIncrease : inputs.salaryIncrease;
-            const currentInflation = adjustment.inflationRate !== undefined ? adjustment.inflationRate : inputs.inflationRate;
-            const currentGrowth = adjustment.growthRate !== undefined ? adjustment.growthRate : inputs.growthRate;
-
             // 1. Determine Income/Spending for this year
             if (i > 0) {
-                // Check for manual override (New Base)
-                if (adjustment.income !== undefined) {
-                    runningIncome = adjustment.income;
-                } else {
-                    runningIncome = runningIncome * (1 + currentSalaryInc);
+                // Check for manual override (user can override monthly income/spending for a year)
+                if (adjustment.monthlyIncome !== undefined) {
+                    runningAnnualIncome = adjustment.monthlyIncome * 12;
                 }
+                // No automatic salary increase - income stays flat unless manually adjusted
 
-                if (adjustment.spending !== undefined) {
-                    runningSpending = adjustment.spending;
-                } else {
-                    runningSpending = runningSpending * (1 + currentInflation);
+                if (adjustment.monthlySpending !== undefined) {
+                    runningAnnualSpending = adjustment.monthlySpending * 12;
                 }
+                // No automatic inflation - spending stays flat unless manually adjusted
             }
 
             // Calculate Cash Flow
-            const cashFlow = runningIncome - runningSpending;
+            const cashFlow = runningAnnualIncome - runningAnnualSpending;
 
             // 2. Asset Allocation Logic
             if (i > 0) {
@@ -150,7 +142,8 @@ export default function FuturePathPage() {
                     }
                 }
 
-                runningInvestments = runningInvestments * (1 + currentGrowth);
+                // Apply investment growth using return rate
+                runningInvestments = runningInvestments * (1 + investmentReturn);
 
                 if (runningDebts > 0) {
                     runningDebts = runningDebts * 1.05;
@@ -171,6 +164,9 @@ export default function FuturePathPage() {
             if (adjustment.debtAdj) {
                 runningDebts += adjustment.debtAdj;
             }
+            if (adjustment.investmentsAdj) {
+                runningInvestments += adjustment.investmentsAdj;
+            }
 
             // Snapshot
             const netWorth = (runningAssets + runningInvestments) - runningDebts;
@@ -178,8 +174,8 @@ export default function FuturePathPage() {
             data.push({
                 index: i,
                 year: yearLabel,
-                Income: Math.round(runningIncome),
-                Spending: Math.round(runningSpending),
+                Income: Math.round(runningAnnualIncome),
+                Spending: Math.round(runningAnnualSpending),
                 CashFlow: Math.round(cashFlow),
                 Assets: Math.round(runningAssets),
                 Investments: Math.round(runningInvestments),
@@ -213,19 +209,29 @@ export default function FuturePathPage() {
 
             const totalAssets = (assetsRes.data || []).reduce((sum, item) => sum + (item.value || 0), 0);
             const totalDebts = (debtsRes.data || []).reduce((sum, item) => sum + (item.balance || 0), 0);
-            const totalIncome = (incomeRes.data || []).reduce((sum, item) => sum + (item.currentIncome || 0), 0);
-            const totalSpending = (spendingRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0) * 12;
+            const totalAnnualIncome = (incomeRes.data || []).reduce((sum, item) => sum + (item.currentIncome || 0), 0);
+            const totalMonthlySpending = (spendingRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
             const totalInvestments = (investmentsRes.data || []).reduce((sum, item) => sum + (item.currentValue || 0), 0);
 
+            // Calculate average investment return rate
+            const investments = investmentsRes.data || [];
+            let avgReturnRate = 0.05;  // Default 5% if no investments
+
+            if (investments.length > 0) {
+                const totalReturn = investments.reduce((sum, inv) => {
+                    const rate = Number(inv.returnRate) || 0;
+                    return sum + rate;
+                }, 0);
+                avgReturnRate = totalReturn / investments.length;
+            }
+
             return {
-                income: totalIncome,
-                spending: totalSpending > 0 ? totalSpending : totalIncome * 0.5,
+                monthlyIncome: Math.round((totalAnnualIncome / 12) * 100) / 100,  // Convert annual to monthly
+                monthlySpending: totalMonthlySpending > 0 ? totalMonthlySpending : Math.round((totalAnnualIncome / 12 * 0.5) * 100) / 100,
                 assets: totalAssets,
                 investments: totalInvestments,
                 debts: totalDebts,
-                growthRate: 0.08,
-                inflationRate: 0.03,
-                salaryIncrease: 0.04
+                investmentReturnRate: avgReturnRate
             };
         } catch (error) {
             console.error("Error fetching real data:", error);
@@ -265,13 +271,11 @@ export default function FuturePathPage() {
         const currentAdj = yearlyAdjustments[editingYear] || {};
 
         return {
-            income: currentAdj.income ?? yearData.Income,
-            spending: currentAdj.spending ?? yearData.Spending,
+            monthlyIncome: currentAdj.monthlyIncome ?? (yearData.Income / 12),
+            monthlySpending: currentAdj.monthlySpending ?? (yearData.Spending / 12),
             assets: yearData.Assets,
             debts: yearData.Debts,
-            growthRate: currentAdj.growthRate !== undefined ? currentAdj.growthRate : inputs.growthRate,
-            inflationRate: currentAdj.inflationRate !== undefined ? currentAdj.inflationRate : inputs.inflationRate,
-            salaryIncrease: currentAdj.salaryIncrease !== undefined ? currentAdj.salaryIncrease : inputs.salaryIncrease
+            investments: currentAdj.investments ?? yearData.Investments
         };
     };
 
@@ -279,7 +283,7 @@ export default function FuturePathPage() {
         if (editingYear === null) {
             setInputs(prev => ({ ...prev, [field]: newValue }));
         } else {
-            if (field === 'income' || field === 'spending') {
+            if (field === 'monthlyIncome' || field === 'monthlySpending') {
                 updateAdjustment(editingYear, field, newValue);
             } else if (field === 'assets') {
                 const currentTotal = simulationData.find(d => d.index === editingYear).Assets;
@@ -291,8 +295,11 @@ export default function FuturePathPage() {
                 const currentAdj = yearlyAdjustments[editingYear]?.debtAdj || 0;
                 const delta = newValue - currentTotal;
                 updateAdjustment(editingYear, 'debtAdj', currentAdj + delta);
-            } else if (['growthRate', 'inflationRate', 'salaryIncrease'].includes(field)) {
-                updateAdjustment(editingYear, field, newValue);
+            } else if (field === 'investments') {
+                const currentTotal = simulationData.find(d => d.index === editingYear).Investments;
+                const currentAdj = yearlyAdjustments[editingYear]?.investmentsAdj || 0;
+                const delta = newValue - currentTotal;
+                updateAdjustment(editingYear, 'investmentsAdj', currentAdj + delta);
             }
         }
     };
@@ -434,21 +441,27 @@ export default function FuturePathPage() {
                         </h3>
 
                         <InputGroup
-                            label={isEditing ? "Annual Income (New Base)" : "Annual Income"}
-                            value={sidebarValues.income}
-                            onChange={(v) => handleSidebarChange('income', v)}
+                            label={isEditing ? "Monthly Income (New Base)" : "Monthly Income"}
+                            value={sidebarValues.monthlyIncome}
+                            onChange={(v) => handleSidebarChange('monthlyIncome', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
-                            label={isEditing ? "Annual Spending (New Base)" : "Annual Spending"}
-                            value={sidebarValues.spending}
-                            onChange={(v) => handleSidebarChange('spending', v)}
+                            label={isEditing ? "Monthly Spending (New Base)" : "Monthly Spending"}
+                            value={sidebarValues.monthlySpending}
+                            onChange={(v) => handleSidebarChange('monthlySpending', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
                             label={isEditing ? "Total Assets (Override)" : "Current Assets"}
                             value={sidebarValues.assets}
                             onChange={(v) => handleSidebarChange('assets', v)}
+                            highlight={isEditing}
+                        />
+                        <InputGroup
+                            label={isEditing ? "Investment Balance (Override)" : "Current Investments"}
+                            value={sidebarValues.investments}
+                            onChange={(v) => handleSidebarChange('investments', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
@@ -459,37 +472,7 @@ export default function FuturePathPage() {
                         />
                     </div>
 
-                    {/* Growth Factors */}
-                    <div className="space-y-4">
-                        <h3 className={`text-sm font-bold flex items-center gap-2 ${isEditing ? 'text-white' : 'text-[#C6AA76]'}`}>
-                            <Activity size={16} className="text-[#9EA2A8]" />
-                            {isEditing ? "Rates (This Year Only)" : "Growth Factors (Global)"}
-                        </h3>
-                        <InputGroup
-                            type="percent"
-                            step={0.01}
-                            label="Investment Return"
-                            value={sidebarValues.growthRate}
-                            onChange={(v) => handleSidebarChange('growthRate', v)}
-                            highlight={isEditing}
-                        />
-                        <InputGroup
-                            type="percent"
-                            step={0.01}
-                            label="Inflation Rate"
-                            value={sidebarValues.inflationRate}
-                            onChange={(v) => handleSidebarChange('inflationRate', v)}
-                            highlight={isEditing}
-                        />
-                        <InputGroup
-                            type="percent"
-                            step={0.01}
-                            label="Salary Increase"
-                            value={sidebarValues.salaryIncrease}
-                            onChange={(v) => handleSidebarChange('salaryIncrease', v)}
-                            highlight={isEditing}
-                        />
-                    </div>
+
 
                     <button onClick={() => setView('landing')} className="w-full py-3 text-xs font-bold uppercase tracking-widest text-[#9EA2A8] hover:text-white border border-[#2C2C2E] hover:border-[#5A5D63] rounded-lg transition-colors">
                         Exit to Home
