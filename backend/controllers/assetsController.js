@@ -89,3 +89,59 @@ exports.getAllAssets = async (req, res) => {
         });
     }
 };
+// @desc    Update an asset
+// @route   PUT /api/assets/:id
+// @access  Public (will add auth later)
+exports.updateAsset = async (req, res) => {
+    try {
+        const asset = await Asset.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!asset) {
+            return res.status(404).json({
+                success: false,
+                message: 'Asset not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: asset
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating asset',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Delete an asset
+// @route   DELETE /api/assets/:id
+// @access  Public (will add auth later)
+exports.deleteAsset = async (req, res) => {
+    try {
+        const asset = await Asset.findByIdAndDelete(req.params.id);
+
+        if (!asset) {
+            return res.status(404).json({
+                success: false,
+                message: 'Asset not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting asset',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const { createAsset, getAllAssets } = require('../controllers/assetsController');
+const { createAsset, getAllAssets, updateAsset, deleteAsset } = require('../controllers/assetsController');
 
-// Validation middleware for creating assets
+// Validation middleware
 const validateAsset = [
     body('type')
-        .trim()
         .notEmpty()
         .withMessage('Asset type is required')
         .isLength({ max: 100 })
@@ -43,5 +42,7 @@ const handleValidationErrors = (req, res, next) => {
 // Routes
 router.post('/', validateAsset, handleValidationErrors, createAsset);
 router.get('/', getAllAssets);
+router.put('/:id', validateAsset, handleValidationErrors, updateAsset);
+router.delete('/:id', deleteAsset);
 
 module.exports = router;

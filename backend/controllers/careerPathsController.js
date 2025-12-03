@@ -56,3 +56,18 @@ exports.compareCareerPaths = (req, res) => {
         });
     }
 };
+
+exports.getCareerPathTemplates = (req, res) => {
+    try {
+        res.status(200).json({
+            success: true,
+            data: pathTemplates
+        });
+    } catch (error) {
+        console.error('Error fetching career path templates:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching templates'
+        });
+    }
+};

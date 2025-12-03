@@ -1,17 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator');
-const { logSpending, getAllSpending, getWeeklyBreakdown } = require('../controllers/spendingController');
+const { logSpending, getAllSpending, getWeeklyBreakdown, updateSpending, deleteSpending } = require('../controllers/spendingController');
 
-// Validation middleware for logging spending
+// Validation middleware
 const validateSpending = [
     body('date')
         .notEmpty()
         .withMessage('Date is required')
-        .isISO8601()
-        .withMessage('Date must be a valid ISO 8601 date'),
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Date must be in YYYY-MM-DD format'),
     body('category')
-        .trim()
         .notEmpty()
         .withMessage('Category is required')
         .isLength({ max: 50 })
@@ -58,5 +57,7 @@ const handleValidationErrors = (req, res, next) => {
 router.get('/', getAllSpending);
 router.post('/', validateSpending, handleValidationErrors, logSpending);
 router.get('/week', validateWeekQuery, handleValidationErrors, getWeeklyBreakdown);
+router.put('/:id', validateSpending, handleValidationErrors, updateSpending);
+router.delete('/:id', deleteSpending);
 
 module.exports = router;

@@ -58,6 +58,26 @@ export const createAsset = async (assetData) => {
     }
 };
 
+export const updateAsset = async (id, assetData) => {
+    try {
+        const response = await api.put(`/api/assets/${id}`, assetData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating asset:', error);
+        throw error;
+    }
+};
+
+export const deleteAsset = async (id) => {
+    try {
+        const response = await api.delete(`/api/assets/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting asset:', error);
+        throw error;
+    }
+};
+
 // Debts API
 export const getDebts = async (profileId) => {
     try {
@@ -76,6 +96,26 @@ export const createDebt = async (debtData) => {
         return response.data;
     } catch (error) {
         console.error('Error creating debt:', error);
+        throw error;
+    }
+};
+
+export const updateDebt = async (id, debtData) => {
+    try {
+        const response = await api.put(`/api/debts/${id}`, debtData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating debt:', error);
+        throw error;
+    }
+};
+
+export const deleteDebt = async (id) => {
+    try {
+        const response = await api.delete(`/api/debts/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting debt:', error);
         throw error;
     }
 };
@@ -102,6 +142,26 @@ export const createIncome = async (incomeData) => {
     }
 };
 
+export const updateIncome = async (id, incomeData) => {
+    try {
+        const response = await api.put(`/api/income/${id}`, incomeData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating income:', error);
+        throw error;
+    }
+};
+
+export const deleteIncome = async (id) => {
+    try {
+        const response = await api.delete(`/api/income/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting income:', error);
+        throw error;
+    }
+};
+
 // Spending API
 export const logSpending = async (spendingData) => {
     try {
@@ -113,6 +173,8 @@ export const logSpending = async (spendingData) => {
     }
 };
 
+export const createSpending = logSpending;
+
 export const getSpending = async (profileId) => {
     try {
         const params = profileId ? { profileId } : {};
@@ -120,6 +182,26 @@ export const getSpending = async (profileId) => {
         return response.data;
     } catch (error) {
         console.error('Error fetching spending:', error);
+        throw error;
+    }
+};
+
+export const updateSpending = async (id, spendingData) => {
+    try {
+        const response = await api.put(`/api/spending/${id}`, spendingData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating spending:', error);
+        throw error;
+    }
+};
+
+export const deleteSpending = async (id) => {
+    try {
+        const response = await api.delete(`/api/spending/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting spending:', error);
         throw error;
     }
 };
@@ -328,4 +410,40 @@ export const compareCareerPaths = async (payload) => {
         console.error('Error comparing career paths:', error);
         throw error;
     }
+};
+
+export const getCareerPathTemplates = async () => {
+    try {
+        const response = await api.get('/api/career-paths/templates');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching career path templates:', error);
+        throw error;
+    }
+};
+
+// Career Advisor API (V3)
+export const evaluateCareerPaths = async (userProfile, paths, preferenceWeights) => {
+    try {
+        const response = await api.post('/api/career-advisor/evaluate', {
+            userProfile,
+            paths,
+            preferenceWeights
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error evaluating career paths:', error);
+        throw error;
+    }
+};
+
+// V4 Projection API
+export const runV4Projection = ({ years = 50, customEvents = [], profileId }) => {
+    return api.post('/api/projection/v4', {
+        baseYear: new Date().getFullYear(),
+        years,
+        timelineEvents: customEvents,
+        profileId // Pass profileId to let backend fetch data
+        // startingState is now optional; backend will fetch if omitted
+    });
 };

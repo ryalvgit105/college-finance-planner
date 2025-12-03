@@ -2,6 +2,9 @@ const Asset = require('../models/Asset');
 const Debt = require('../models/Debt');
 const Income = require('../models/Income');
 const Goal = require('../models/Goal');
+const Spending = require('../models/Spending');
+const Investment = require('../models/Investment');
+const { runProjection } = require('../utils/projectionEngine');
 
 // @desc    Generate financial projection
 // @route   GET /api/projection
@@ -195,3 +198,125 @@ function generateRecommendations(summary, goalAnalysis) {
 
     return recommendations;
 }
+
+// @desc    Generate V4 financial projection (Pure Engine)
+// @route   POST /api/projection/v4
+// @access  Public (will add auth later)
+exports.getV4Projection = async (req, res) => {
+    try {
+        const {
+            baseYear,
+            years,
+            startingState: providedState,
+            timelineEvents,
+            settings,
+            profileId // Optional: if provided, we fetch data for this profile
+        } = req.body;
+
+        let startingState = providedState;
+
+        // If startingState is not provided, build it from the database
+        if (!startingState || Object.keys(startingState).length === 0) {
+            const targetProfileId = profileId || req.query.profileId;
+
+            if (targetProfileId) {
+                // Fetch all data
+                const [assets, debts, incomeRecords, goals, spendingLogs, investments] = await Promise.all([
+                    Asset.find({ profileId: targetProfileId }),
+                    Debt.find({ profileId: targetProfileId }),
+                    Income.find({ profileId: targetProfileId }).sort({ createdAt: -1 }).limit(1),
+                    Goal.find({ profileId: targetProfileId }),
+                    Spending.find({ profileId: targetProfileId }).sort({ date: -1 }).limit(90), // Last ~3 months
+                    Investment.find({ profileId: targetProfileId })
+                ]);
+
+                const currentIncome = incomeRecords.length > 0 ? incomeRecords[0].currentIncome : 0;
+                const totalAssets = assets.reduce((sum, a) => sum + a.value, 0);
+
+                // Map DB debts to engine debt format
+                const engineDebts = debts.map(d => ({
+                    amount: d.balance,
+                    interestRate: d.interestRate / 100, // Convert percentage to decimal
+                    monthlyPayment: d.monthlyPayment
+                }));
+
+                // Calculate spending
+                // Strategy: Use average of last 3 months of spending logs. 
+                // If no logs, fallback to Goal budgets.
+                let annualSpending = 0;
+                if (spendingLogs.length > 0) {
+                    // Calculate average monthly spending
+                    const dates = spendingLogs.map(s => new Date(s.date).getMonth());
+                    const uniqueMonths = new Set(dates).size || 1;
+                    const totalLogged = spendingLogs.reduce((sum, s) => sum + s.amount, 0);
+                    const monthlyAverage = totalLogged / uniqueMonths;
+                    annualSpending = monthlyAverage * 12;
+                } else {
+                    // Fallback to Goal budgets
+                    const monthlyGoalBudget = goals.reduce((sum, g) => sum + g.monthlyBudget, 0);
+                    annualSpending = monthlyGoalBudget * 12;
+
+                    if (annualSpending === 0 && currentIncome > 0) {
+                        // If no spending data at all, assume 50% of income is spent (50/30/20 rule)
+                        annualSpending = currentIncome * 0.5;
+                    }
+                }
+
+                // Map DB investments to engine investment format
+                const engineInvestments = investments.map(inv => ({
+                    value: inv.currentValue,
+                    monthlyContribution: inv.contributionPerMonth,
+                    returnRate: inv.expectedAnnualReturn / 100, // Convert % to decimal
+                    active: true
+                }));
+
+                startingState = {
+                    assets: totalAssets,
+                    debts: engineDebts,
+                    income: currentIncome,
+                    spending: annualSpending,
+                    investments: engineInvestments
+                };
+            } else {
+                // Fallback default state
+                startingState = {
+                    assets: 10000,
+                    debts: [],
+                    income: 60000,
+                    spending: 40000,
+                    investments: []
+                };
+            }
+        }
+
+        // Basic validation
+        if (!baseYear) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required field: baseYear'
+            });
+        }
+
+        // Run projection using the pure engine
+        const result = runProjection({
+            baseYear: parseInt(baseYear),
+            years: parseInt(years) || 10,
+            startingState,
+            timelineEvents: timelineEvents || [],
+            settings: settings || {}
+        });
+
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        console.error('V4 Projection Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while generating V4 projection',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

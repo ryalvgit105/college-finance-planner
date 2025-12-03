@@ -81,3 +81,59 @@ exports.getIncome = async (req, res) => {
         });
     }
 };
+// @desc    Update an income entry
+// @route   PUT /api/income/:id
+// @access  Public (will add auth later)
+exports.updateIncome = async (req, res) => {
+    try {
+        const income = await Income.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!income) {
+            return res.status(404).json({
+                success: false,
+                message: 'Income entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: income
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating income',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Delete an income entry
+// @route   DELETE /api/income/:id
+// @access  Public (will add auth later)
+exports.deleteIncome = async (req, res) => {
+    try {
+        const income = await Income.findByIdAndDelete(req.params.id);
+
+        if (!income) {
+            return res.status(404).json({
+                success: false,
+                message: 'Income entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting income',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

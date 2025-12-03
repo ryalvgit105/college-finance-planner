@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const { createOrUpdateIncome, getIncome } = require('../controllers/incomeController');
+const { createOrUpdateIncome, getIncome, updateIncome, deleteIncome } = require('../controllers/incomeController');
 
-// Validation middleware for income/career data
+// Validation middleware
 const validateIncome = [
     body('currentIncome')
         .notEmpty()
@@ -65,5 +65,7 @@ const handleValidationErrors = (req, res, next) => {
 // Routes
 router.post('/', validateIncome, handleValidationErrors, createOrUpdateIncome);
 router.get('/', getIncome);
+router.put('/:id', validateIncome, handleValidationErrors, updateIncome);
+router.delete('/:id', deleteIncome);
 
 module.exports = router;

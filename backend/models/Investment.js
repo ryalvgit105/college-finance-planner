@@ -32,9 +32,32 @@ const InvestmentSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    // V4 Projection Engine Fields
+    taxTreatment: {
+        type: String,
+        enum: ['taxable', 'tax_deferred', 'tax_free'],
+        default: 'taxable'
+    },
+    startYearOffset: {
+        type: Number,
+        default: 0,
+        comment: 'Years from projection base year when this investment starts/started (0 = base year)'
+    },
+    endYearOffset: {
+        type: Number,
+        default: null,
+        comment: 'Years from projection base year when this investment ends (null = indefinite)'
+    },
     notes: {
         type: String
     }
 }, { timestamps: true });
+
+// V4 Virtual field for naming consistency
+InvestmentSchema.virtual('contributionPerMonth').get(function () {
+    return this.monthlyContribution;
+}).set(function (value) {
+    this.monthlyContribution = value;
+});
 
 module.exports = mongoose.model('Investment', InvestmentSchema);

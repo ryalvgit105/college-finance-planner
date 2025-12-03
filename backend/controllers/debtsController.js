@@ -78,3 +78,59 @@ exports.getAllDebts = async (req, res) => {
         });
     }
 };
+// @desc    Update a debt
+// @route   PUT /api/debts/:id
+// @access  Public (will add auth later)
+exports.updateDebt = async (req, res) => {
+    try {
+        const debt = await Debt.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!debt) {
+            return res.status(404).json({
+                success: false,
+                message: 'Debt not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: debt
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating debt',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Delete a debt
+// @route   DELETE /api/debts/:id
+// @access  Public (will add auth later)
+exports.deleteDebt = async (req, res) => {
+    try {
+        const debt = await Debt.findByIdAndDelete(req.params.id);
+
+        if (!debt) {
+            return res.status(404).json({
+                success: false,
+                message: 'Debt not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting debt',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

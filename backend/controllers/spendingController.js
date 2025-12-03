@@ -155,3 +155,59 @@ exports.getWeeklyBreakdown = async (req, res) => {
         });
     }
 };
+// @desc    Update a spending entry
+// @route   PUT /api/spending/:id
+// @access  Public (will add auth later)
+exports.updateSpending = async (req, res) => {
+    try {
+        const spending = await Spending.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!spending) {
+            return res.status(404).json({
+                success: false,
+                message: 'Spending entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: spending
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating spending',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// @desc    Delete a spending entry
+// @route   DELETE /api/spending/:id
+// @access  Public (will add auth later)
+exports.deleteSpending = async (req, res) => {
+    try {
+        const spending = await Spending.findByIdAndDelete(req.params.id);
+
+        if (!spending) {
+            return res.status(404).json({
+                success: false,
+                message: 'Spending entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting spending',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};

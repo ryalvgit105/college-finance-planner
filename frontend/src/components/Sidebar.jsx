@@ -1,25 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
-import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings, LuTrendingUp, LuTarget } from 'react-icons/lu';
+import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings, LuTrendingUp, LuTarget, LuChevronRight, LuChevronDown } from 'react-icons/lu';
 
 const Sidebar = () => {
     const { currentProfile } = useProfile();
+    const [isBaseProfileOpen, setIsBaseProfileOpen] = useState(false);
 
     const navItems = [
-
         { name: 'Dashboard', path: '/', icon: LuHouse, module: null },
         { name: 'Career Path Explorer', path: '/career-path-explorer', icon: LuTrendingUp, module: null },
-        // { name: 'Assets', path: '/assets', icon: LuDollarSign, module: 'assets' },
-        // { name: 'Debts', path: '/debts', icon: LuCreditCard, module: 'debts' },
-        // { name: 'Income', path: '/income', icon: LuLandmark, module: 'income' },
-        // { name: 'Spending', path: '/spending', icon: LuShoppingCart, module: 'spending' },
-        // { name: 'Goals', path: '/goals', icon: LuTrophy, module: 'goals' },
-        // { name: 'Milestones', path: '/milestones', icon: LuCalendar, module: 'milestones' },
-        // { name: 'Tax & Benefits', path: '/tax-benefits', icon: LuLandmark, module: 'income' },
-        // { name: 'Opportunity Cost', path: '/opportunity-cost', icon: LuTrophy, module: null },
-        // { name: 'Investments', path: '/investments', icon: LuTrendingUp, module: 'assets' },
-        // { name: 'Goal Planner', path: '/goal-planner', icon: LuTarget, module: 'goals' },
+        { name: 'Projection Sandbox (V4)', path: '/projection-v4', icon: LuTrendingUp, module: null },
+    ];
+
+    const baseProfileItems = [
+        { name: 'Assets', path: '/assets', icon: LuDollarSign },
+        { name: 'Debts', path: '/debts', icon: LuCreditCard },
+        { name: 'Income', path: '/income', icon: LuLandmark },
+        { name: 'Spending', path: '/spending', icon: LuShoppingCart },
+        { name: 'Investments', path: '/investments', icon: LuTrendingUp },
     ];
 
     // Filter items based on enabled modules
@@ -54,6 +53,42 @@ const Sidebar = () => {
                             </NavLink>
                         );
                     })}
+
+                    {/* Base Profile Collapsible Section */}
+                    <div className="pt-2">
+                        <button
+                            onClick={() => setIsBaseProfileOpen(!isBaseProfileOpen)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200"
+                        >
+                            <span className="font-medium flex items-center">
+                                <span className="mr-3">Base Profile</span>
+                            </span>
+                            {isBaseProfileOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
+                        </button>
+
+                        {isBaseProfileOpen && (
+                            <div className="ml-4 mt-1 space-y-1 border-l border-gray-600 pl-2">
+                                {baseProfileItems.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <NavLink
+                                            key={item.path}
+                                            to={item.path}
+                                            className={({ isActive }) =>
+                                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
+                                                    ? 'text-[#C6AA76] font-semibold'
+                                                    : 'text-gray-400 hover:text-[#D4B483]'
+                                                }`
+                                            }
+                                        >
+                                            <Icon size={16} />
+                                            <span>{item.name}</span>
+                                        </NavLink>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </nav>
             </div>
 

@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const { createDebt, getAllDebts } = require('../controllers/debtsController');
+const { createDebt, getAllDebts, updateDebt, deleteDebt } = require('../controllers/debtsController');
 
-// Validation middleware for creating debts
+// Validation middleware
 const validateDebt = [
     body('type')
-        .trim()
         .notEmpty()
         .withMessage('Debt type is required')
         .isLength({ max: 100 })
@@ -55,5 +54,7 @@ const handleValidationErrors = (req, res, next) => {
 // Routes
 router.post('/', validateDebt, handleValidationErrors, createDebt);
 router.get('/', getAllDebts);
+router.put('/:id', validateDebt, handleValidationErrors, updateDebt);
+router.delete('/:id', deleteDebt);
 
 module.exports = router;
