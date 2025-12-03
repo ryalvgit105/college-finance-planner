@@ -501,7 +501,7 @@ export default function FuturePathPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <KPICard title="Proj. Net Worth" value={formatMoney(finalNetWorth)} icon={TrendingUp} colorClass="text-[#C6AA76] text-black" />
                     <KPICard title="Avg. Yearly Growth" value={formatMoney((finalNetWorth - (inputs.assets - inputs.debts)) / projectionYears)} icon={Activity} colorClass="text-white" />
-                    <KPICard title="Total Spending" value={formatMoney(inputs.spending * projectionYears)} icon={CreditCard} colorClass="text-white" />
+                    <KPICard title="Total Spending" value={formatMoney((inputs.monthlySpending || 0) * 12 * projectionYears)} icon={CreditCard} colorClass="text-white" />
                     <KPICard title="Liquid Assets" value={formatMoney(simulationData[simulationData.length - 1]?.Assets || 0)} icon={DollarSign} colorClass="text-white" />
                 </div>
 
