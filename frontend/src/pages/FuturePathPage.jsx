@@ -78,19 +78,51 @@ const KPICard = ({ title, value, icon: Icon, colorClass }) => (
     </div>
 );
 
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        const colorMap = {
+            'Net Worth': '#C6AA76',
+            'Investments': '#8b5cf6',
+            'Liquid Assets': '#10b981',
+            'Debts': '#ef4444'
+        };
+
+        return (
+            <div className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg p-3 shadow-xl">
+                <p className="text-white font-bold mb-2">{label}</p>
+                {payload.map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2 mb-1">
+                        <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: colorMap[entry.name] || entry.color }}
+                        />
+                        <span className="text-[#B5B8BD] text-sm">{entry.name}:</span>
+                        <span className="text-white text-sm font-semibold">{formatMoney(entry.value)}</span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 // --- Main Application ---
 
 export default function FuturePathPage() {
     const { currentProfile } = useProfile();
     const [view, setView] = useState('landing'); // landing, setup, dashboard
     const [inputs, setInputs] = useState(BLANK_DATA);
-    const [projectionYears, setProjectionYears] = useState(30);
+    const [projectionYears, setProjectionYears] = useState(5);
     const [simulationData, setSimulationData] = useState([]);
     const [finalNetWorth, setFinalNetWorth] = useState(0);
 
     // New State: Yearly Overrides
     const [yearlyAdjustments, setYearlyAdjustments] = useState({});
     const [editingYear, setEditingYear] = useState(null); // Which year index is being edited
+
+    // V5: Detailed lists for rate display
+    const [detailedInvestments, setDetailedInvestments] = useState([]);
+    const [detailedDebts, setDetailedDebts] = useState([]);
 
     // --- Simulation Engine ---
     const runSimulation = () => {
@@ -107,6 +139,14 @@ export default function FuturePathPage() {
         // Use investment return rate and debt interest rate from data
         const investmentReturn = Number(inputs.investmentReturnRate) || 0.05;
         const debtInterest = Number(inputs.debtInterestRate) || 0.05;
+
+        // DEBUG: Log rates to verify they're correct
+        console.log('DEBUG FuturePath Rates:', {
+            investmentReturnRate: inputs.investmentReturnRate,
+            investmentReturn: investmentReturn,
+            debtInterestRate: inputs.debtInterestRate,
+            debtInterest: debtInterest
+        });
 
         for (let i = 0; i <= projectionYears; i++) {
             const yearLabel = (currentYear + i).toString();
@@ -148,15 +188,9 @@ export default function FuturePathPage() {
                 // Apply investment growth using return rate
                 runningInvestments = runningInvestments * (1 + investmentReturn);
 
+                // Apply debt interest growth
                 if (runningDebts > 0) {
                     runningDebts = runningDebts * (1 + debtInterest);
-                    const safetyBuffer = 10000;
-                    if (runningAssets > safetyBuffer) {
-                        const availableToPay = runningAssets - safetyBuffer;
-                        const payment = Math.min(availableToPay, runningDebts);
-                        runningDebts -= payment;
-                        runningAssets -= payment;
-                    }
                 }
             }
 
@@ -199,7 +233,7 @@ export default function FuturePathPage() {
     }, [inputs, projectionYears, view, yearlyAdjustments]);
 
     const fetchRealData = async () => {
-        if (!currentProfile) return MOCK_USER_DATA;
+        if (!currentProfile) return { data: MOCK_USER_DATA, investments: [], debts: [] };
 
         try {
             const [assetsRes, debtsRes, incomeRes, spendingRes, investmentsRes] = await Promise.all([
@@ -211,56 +245,78 @@ export default function FuturePathPage() {
             ]);
 
             const totalAssets = (assetsRes.data || []).reduce((sum, item) => sum + (item.value || 0), 0);
-            const totalDebts = (debtsRes.data || []).reduce((sum, item) => sum + (item.balance || 0), 0);
             const totalAnnualIncome = (incomeRes.data || []).reduce((sum, item) => sum + (item.currentIncome || 0), 0);
             const totalMonthlySpending = (spendingRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-            const totalInvestments = (investmentsRes.data || []).reduce((sum, item) => sum + (item.currentValue || 0), 0);
 
-            // Calculate average investment return rate
+            // V5: Calculate weighted investment return rate
             const investments = investmentsRes.data || [];
-            let avgReturnRate = 0.05;  // Default 5% if no investments
+            const totalInvestments = investments.reduce((sum, item) => sum + (item.currentValue || 0), 0);
+            let weightedInvestmentReturn = 0.05; // Default 5%
 
-            if (investments.length > 0) {
-                const totalReturn = investments.reduce((sum, inv) => {
-                    const rate = Number(inv.returnRate) || 0;
-                    return sum + rate;
+            if (totalInvestments > 0) {
+                const weightedSum = investments.reduce((sum, inv) => {
+                    // expectedAnnualReturn is stored as percentage (e.g., 7.0 = 7%) - divide by 100
+                    let rate = (Number(inv.expectedAnnualReturn) || 7) / 100;
+                    return sum + ((inv.currentValue || 0) * rate);
                 }, 0);
-                avgReturnRate = totalReturn / investments.length;
+                weightedInvestmentReturn = weightedSum / totalInvestments;
             }
 
-            // Calculate average debt interest rate
+            // V5: Calculate weighted debt interest rate
             const debts = debtsRes.data || [];
-            let avgDebtRate = 0.05;  // Default 5% if no debts
+            const totalDebts = debts.reduce((sum, item) => sum + (item.balance || 0), 0);
+            let weightedDebtRate = 0.05; // Default 5%
 
-            if (debts.length > 0) {
-                const totalDebtRate = debts.reduce((sum, debt) => {
-                    const rate = Number(debt.interestRate) || 0;
-                    return sum + rate;
+            if (totalDebts > 0) {
+                const weightedSum = debts.reduce((sum, debt) => {
+                    // Always divide by 100 - rates are stored as percentages (e.g., 5 = 5%, 0.75 = 0.75%)
+                    let rate = (Number(debt.interestRate) || 0) / 100;
+                    return sum + ((debt.balance || 0) * rate);
                 }, 0);
-                avgDebtRate = totalDebtRate / debts.length;
+                weightedDebtRate = weightedSum / totalDebts;
             }
+
+            const detailedInvList = investments.map(inv => ({
+                name: inv.name || inv.assetType || 'Investment',
+                balance: inv.currentValue || 0,
+                rate: Number(inv.expectedAnnualReturn) || 7  // Already stored as percentage (7 = 7%)
+            }));
+
+            const detailedDebtList = debts.map(debt => ({
+                name: debt.name || debt.type || 'Debt',
+                balance: debt.balance || 0,
+                rate: Number(debt.interestRate) || 0  // Rate is already stored as percentage
+            }));
 
             return {
-                monthlyIncome: Math.round((totalAnnualIncome / 12) * 100) / 100,  // Convert annual to monthly
-                monthlySpending: totalMonthlySpending > 0 ? totalMonthlySpending : Math.round((totalAnnualIncome / 12 * 0.5) * 100) / 100,
-                assets: totalAssets,
-                investments: totalInvestments,
-                debts: totalDebts,
-                investmentReturnRate: avgReturnRate,
-                debtInterestRate: avgDebtRate
+                data: {
+                    monthlyIncome: Math.round((totalAnnualIncome / 12) * 100) / 100,
+                    monthlySpending: totalMonthlySpending > 0 ? totalMonthlySpending : Math.round((totalAnnualIncome / 12 * 0.5) * 100) / 100,
+                    assets: totalAssets,
+                    investments: totalInvestments,
+                    debts: totalDebts,
+                    investmentReturnRate: weightedInvestmentReturn,
+                    debtInterestRate: weightedDebtRate
+                },
+                investments: detailedInvList,
+                debts: detailedDebtList
             };
         } catch (error) {
             console.error("Error fetching real data:", error);
-            return MOCK_USER_DATA;
+            return { data: MOCK_USER_DATA, investments: [], debts: [] };
         }
     };
 
     const handleStartDraft = async (useCurrent) => {
         if (useCurrent) {
-            const realData = await fetchRealData();
-            setInputs(realData);
+            const result = await fetchRealData();
+            setInputs(result.data);
+            setDetailedInvestments(result.investments);
+            setDetailedDebts(result.debts);
         } else {
             setInputs(BLANK_DATA);
+            setDetailedInvestments([]);
+            setDetailedDebts([]);
         }
         setYearlyAdjustments({});
         setView('dashboard');
@@ -432,6 +488,27 @@ export default function FuturePathPage() {
 
                 <div className="p-6 space-y-8 flex-grow">
 
+                    {/* Projection Horizon Slider */}
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-xs font-bold uppercase tracking-wider text-[#9EA2A8]">
+                                Projection Horizon
+                            </label>
+                            <span className="text-xs font-bold text-white bg-[#1C1C1E] px-2 py-1 rounded border border-[#2C2C2E]">
+                                {projectionYears} Years
+                            </span>
+                        </div>
+                        <input
+                            type="range"
+                            min="1"
+                            max="60"
+                            step="1"
+                            value={projectionYears}
+                            onChange={(e) => setProjectionYears(Number(e.target.value))}
+                            className="w-full h-1 bg-[#2C2C2E] rounded-lg appearance-none cursor-pointer accent-[#C6AA76] hover:accent-[#D4AF37]"
+                        />
+                    </div>
+
                     {/* Dynamic Header for Context */}
                     <div className={`rounded-xl p-4 border ${isEditing ? 'bg-[#2C2C2E] border-[#C6AA76]' : 'bg-[#1C1C1E] border-[#2C2C2E]'}`}>
                         <div className="flex justify-between items-start mb-2">
@@ -458,37 +535,73 @@ export default function FuturePathPage() {
 
                         <InputGroup
                             label={isEditing ? "Monthly Income (New Base)" : "Monthly Income"}
-                            value={sidebarValues.monthlyIncome}
+                            value={Math.round(sidebarValues.monthlyIncome * 100) / 100}
                             onChange={(v) => handleSidebarChange('monthlyIncome', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
                             label={isEditing ? "Monthly Spending (New Base)" : "Monthly Spending"}
-                            value={sidebarValues.monthlySpending}
+                            value={Math.round(sidebarValues.monthlySpending * 100) / 100}
                             onChange={(v) => handleSidebarChange('monthlySpending', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
                             label={isEditing ? "Total Assets (Override)" : "Current Assets"}
-                            value={sidebarValues.assets}
+                            value={Math.round(sidebarValues.assets * 100) / 100}
                             onChange={(v) => handleSidebarChange('assets', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
                             label={isEditing ? "Investment Balance (Override)" : "Current Investments"}
-                            value={sidebarValues.investments}
+                            value={Math.round(sidebarValues.investments * 100) / 100}
                             onChange={(v) => handleSidebarChange('investments', v)}
                             highlight={isEditing}
                         />
                         <InputGroup
                             label={isEditing ? "Total Debts (Override)" : "Current Debts"}
-                            value={sidebarValues.debts}
+                            value={Math.round(sidebarValues.debts * 100) / 100}
                             onChange={(v) => handleSidebarChange('debts', v)}
                             highlight={isEditing}
                         />
                     </div>
 
+                    {/* V5: Investment Return Rates (Read-Only) */}
+                    {!isEditing && detailedInvestments.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9EA2A8]">Investment Return Rates</h4>
+                            <div className="bg-[#1C1C1E] rounded-lg p-3 space-y-2 text-xs">
+                                {detailedInvestments.map((inv, idx) => (
+                                    <div key={idx} className="flex justify-between items-center text-[#B5B8BD]">
+                                        <span className="truncate max-w-[60%]">{inv.name}</span>
+                                        <span className="font-semibold text-[#C6AA76]">{inv.rate.toFixed(2)}%</span>
+                                    </div>
+                                ))}
+                                <div className="border-t border-[#2C2C2E] pt-2 mt-2 flex justify-between items-center text-white font-bold">
+                                    <span>Weighted Avg:</span>
+                                    <span className="text-[#C6AA76]">{(inputs.investmentReturnRate * 100).toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
+                    {/* V5: Debt Interest Rates (Read-Only) */}
+                    {!isEditing && detailedDebts.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9EA2A8]">Debt Interest Rates</h4>
+                            <div className="bg-[#1C1C1E] rounded-lg p-3 space-y-2 text-xs">
+                                {detailedDebts.map((debt, idx) => (
+                                    <div key={idx} className="flex justify-between items-center text-[#B5B8BD]">
+                                        <span className="truncate max-w-[60%]">{debt.name}</span>
+                                        <span className="font-semibold text-[#ef4444]">{debt.rate.toFixed(1)}%</span>
+                                    </div>
+                                ))}
+                                <div className="border-t border-[#2C2C2E] pt-2 mt-2 flex justify-between items-center text-white font-bold">
+                                    <span>Weighted Avg:</span>
+                                    <span className="text-[#ef4444]">{(inputs.debtInterestRate * 100).toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <button onClick={() => setView('landing')} className="w-full py-3 text-xs font-bold uppercase tracking-widest text-[#9EA2A8] hover:text-white border border-[#2C2C2E] hover:border-[#5A5D63] rounded-lg transition-colors">
                         Exit to Home
@@ -541,10 +654,12 @@ export default function FuturePathPage() {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#2C2C2E" vertical={false} />
                                     <XAxis dataKey="year" stroke="#5A5D63" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#5A5D63" fontSize={12} tickFormatter={(val) => `$${val / 1000}k`} tickLine={false} axisLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#1C1C1E', borderColor: '#2C2C2E', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#B5B8BD' }} formatter={(value) => formatMoney(value)} />
+                                    <Tooltip content={<CustomTooltip />} />
                                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Area type="monotone" name="Net Worth" dataKey="NetWorth" stroke="#C6AA76" strokeWidth={2} fillOpacity={1} fill="url(#colorNw)" />
-                                    <Area type="monotone" name="Debts" dataKey="Debts" stroke="#5A5D63" strokeWidth={2} fillOpacity={0.1} fill="#5A5D63" />
+                                    <Area type="monotone" name="Net Worth" dataKey="NetWorth" stroke="#C6AA76" strokeWidth={3} fillOpacity={1} fill="url(#colorNw)" />
+                                    <Area type="monotone" name="Investments" dataKey="Investments" stroke="#8b5cf6" strokeWidth={2} fillOpacity={0.1} fill="#8b5cf6" />
+                                    <Area type="monotone" name="Liquid Assets" dataKey="Assets" stroke="#10b981" strokeWidth={2} fillOpacity={0.1} fill="#10b981" />
+                                    <Area type="monotone" name="Debts" dataKey="Debts" stroke="#ef4444" strokeWidth={2} fillOpacity={0.1} fill="#ef4444" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
