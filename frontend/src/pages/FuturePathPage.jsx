@@ -228,13 +228,26 @@ export default function FuturePathPage() {
                 avgReturnRate = totalReturn / investments.length;
             }
 
+            // Calculate average debt interest rate
+            const debts = debtsRes.data || [];
+            let avgDebtRate = 0.05;  // Default 5% if no debts
+
+            if (debts.length > 0) {
+                const totalDebtRate = debts.reduce((sum, debt) => {
+                    const rate = Number(debt.interestRate) || 0;
+                    return sum + rate;
+                }, 0);
+                avgDebtRate = totalDebtRate / debts.length;
+            }
+
             return {
                 monthlyIncome: Math.round((totalAnnualIncome / 12) * 100) / 100,  // Convert annual to monthly
                 monthlySpending: totalMonthlySpending > 0 ? totalMonthlySpending : Math.round((totalAnnualIncome / 12 * 0.5) * 100) / 100,
                 assets: totalAssets,
                 investments: totalInvestments,
                 debts: totalDebts,
-                investmentReturnRate: avgReturnRate
+                investmentReturnRate: avgReturnRate,
+                debtInterestRate: avgDebtRate
             };
         } catch (error) {
             console.error("Error fetching real data:", error);

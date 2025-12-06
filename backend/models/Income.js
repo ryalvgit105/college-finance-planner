@@ -23,7 +23,6 @@ const incomeSchema = new mongoose.Schema({
     },
     careerGoal: {
         type: String,
-        required: [true, 'Career goal is required'],
         trim: true,
         maxlength: [200, 'Career goal cannot exceed 200 characters']
     },

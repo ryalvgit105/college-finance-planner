@@ -176,8 +176,8 @@ const Income = () => {
                     <Link to="/projection-v4" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2 transition-colors">
                         <LuArrowLeft className="mr-1" /> Back to Projection Sandbox
                     </Link>
-                    <h2 className="text-3xl font-bold text-gray-800">Income & Career</h2>
-                    <p className="text-gray-600">Track your earnings and plan your career trajectory</p>
+                    <h2 className="text-3xl font-bold text-gray-800">Income</h2>
+                    <p className="text-gray-600">Track your earnings</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
@@ -242,7 +242,7 @@ const Income = () => {
                             <LuBriefcase className="w-full h-full" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">No income records yet</h3>
-                        <p className="mt-1 text-gray-500">Add your current income and career goals.</p>
+                        <p className="mt-1 text-gray-500">Add your current income.</p>
                         <button
                             onClick={() => handleOpenModal()}
                             className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -255,21 +255,15 @@ const Income = () => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Career Goal</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sources</th>
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Income</th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Salary</th>
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {incomes.map((income) => (
                                     <tr key={income._id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{income.careerGoal || 'N/A'}</div>
-                                            <div className="text-xs text-gray-500">{income.educationRequired}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                        <td className="px-6 py-4 text-sm text-gray-500">
                                             {income.incomeSources && income.incomeSources.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
                                                     {income.incomeSources.map((source, idx) => (
@@ -282,9 +276,6 @@ const Income = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600">
                                             ${income.currentIncome?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                            ${income.projectedSalary?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button
@@ -346,64 +337,16 @@ const Income = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="projectedSalary" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Projected Future Salary ($)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                id="projectedSalary"
-                                                name="projectedSalary"
-                                                value={formData.projectedSalary}
-                                                onChange={handleChange}
-                                                placeholder="0.00"
-                                                step="0.01"
-                                                min="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="incomeSources" className="block text-sm font-medium text-gray-700 mb-1">
-                                            Income Sources (comma separated)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="incomeSources"
-                                            name="incomeSources"
-                                            value={formData.incomeSources}
-                                            onChange={handleChange}
-                                            placeholder="e.g. Job, Freelance, Dividends"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="careerGoal" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Career Goal
+                                            <label htmlFor="incomeSources" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Income Sources (comma separated)
                                             </label>
                                             <input
                                                 type="text"
-                                                id="careerGoal"
-                                                name="careerGoal"
-                                                value={formData.careerGoal}
+                                                id="incomeSources"
+                                                name="incomeSources"
+                                                value={formData.incomeSources}
                                                 onChange={handleChange}
-                                                placeholder="e.g. Software Engineer"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="educationRequired" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Education Required
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="educationRequired"
-                                                name="educationRequired"
-                                                value={formData.educationRequired}
-                                                onChange={handleChange}
-                                                placeholder="e.g. BS in Computer Science"
+                                                placeholder="e.g. Job, Freelance, Dividends"
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                             />
                                         </div>

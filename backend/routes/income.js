@@ -23,23 +23,6 @@ const validateIncome = [
             return true;
         })
         .withMessage('Income sources must be non-empty strings'),
-    body('careerGoal')
-        .trim()
-        .notEmpty()
-        .withMessage('Career goal is required')
-        .isLength({ max: 200 })
-        .withMessage('Career goal cannot exceed 200 characters'),
-    body('projectedSalary')
-        .optional()
-        .isNumeric()
-        .withMessage('Projected salary must be a number')
-        .custom((value) => value >= 0)
-        .withMessage('Projected salary must be a positive number'),
-    body('educationRequired')
-        .optional()
-        .trim()
-        .isLength({ max: 300 })
-        .withMessage('Education required cannot exceed 300 characters'),
     body('notes')
         .optional()
         .trim()

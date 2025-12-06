@@ -122,14 +122,20 @@ const InvestmentsPage = () => {
 
         try {
             setLoading(true);
+            const taxMapping = {
+                'Taxable': 'taxable',
+                'Tax-Deferred': 'tax_deferred',
+                'Tax-Free': 'tax_free'
+            };
+
             const investmentData = {
                 profileId: currentProfile._id,
                 name: formData.name.trim(),
-                type: formData.type,
+                assetType: formData.type.toLowerCase(),
                 currentValue: parseFloat(formData.currentValue) || 0,
                 contributionPerMonth: parseFloat(formData.contributionPerMonth) || 0,
                 expectedAnnualReturn: parseFloat(formData.expectedAnnualReturn) || 0,
-                taxTreatment: formData.taxTreatment,
+                taxTreatment: taxMapping[formData.taxTreatment] || 'taxable',
                 startYearOffset: parseInt(formData.startYearOffset) || 0,
                 endYearOffset: parseInt(formData.endYearOffset) || 0
             };
@@ -273,11 +279,11 @@ const InvestmentsPage = () => {
                                     <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                                            <div className="text-xs text-gray-500">{item.taxTreatment}</div>
+                                            <div className="text-xs text-gray-500 capitalize">{item.taxTreatment?.replace('_', ' ')}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                                {item.type}
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
+                                                {item.assetType}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
@@ -390,7 +396,7 @@ const InvestmentsPage = () => {
                                         </div>
                                         <div>
                                             <label htmlFor="contributionPerMonth" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Monthly Contribution ($)
+                                                Monthly Contribution ($) <span className="text-gray-400 font-normal">(Optional)</span>
                                             </label>
                                             <input
                                                 type="number"
@@ -408,19 +414,47 @@ const InvestmentsPage = () => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label htmlFor="expectedAnnualReturn" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Expected Annual Return (%)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                id="expectedAnnualReturn"
-                                                name="expectedAnnualReturn"
-                                                value={formData.expectedAnnualReturn}
-                                                onChange={handleChange}
-                                                placeholder="7.0"
-                                                step="0.1"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                            />
+                                            <div className="md:col-span-2">
+                                                <label htmlFor="expectedAnnualReturn" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Expected Annual Return (%)
+                                                </label>
+                                                <div className="flex flex-wrap gap-2 mb-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleChange({ target: { name: 'expectedAnnualReturn', value: '3.0' } })}
+                                                        className={`px-3 py-1 text-xs rounded-full border ${parseFloat(formData.expectedAnnualReturn) === 3.0 ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                                                    >
+                                                        Conservative (3%)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleChange({ target: { name: 'expectedAnnualReturn', value: '7.0' } })}
+                                                        className={`px-3 py-1 text-xs rounded-full border ${parseFloat(formData.expectedAnnualReturn) === 7.0 ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                                                    >
+                                                        Average (7%)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleChange({ target: { name: 'expectedAnnualReturn', value: '10.0' } })}
+                                                        className={`px-3 py-1 text-xs rounded-full border ${parseFloat(formData.expectedAnnualReturn) === 10.0 ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                                                    >
+                                                        High (10%)
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    id="expectedAnnualReturn"
+                                                    name="expectedAnnualReturn"
+                                                    value={formData.expectedAnnualReturn}
+                                                    onChange={handleChange}
+                                                    placeholder="7.0"
+                                                    step="0.1"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                />
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Select a preset or enter a custom rate based on your asset type.
+                                                </p>
+                                            </div>
                                         </div>
                                         <div>
                                             <label htmlFor="taxTreatment" className="block text-sm font-medium text-gray-700 mb-1">
@@ -440,38 +474,7 @@ const InvestmentsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="startYearOffset" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Start Year (Offset from now)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                id="startYearOffset"
-                                                name="startYearOffset"
-                                                value={formData.startYearOffset}
-                                                onChange={handleChange}
-                                                placeholder="0"
-                                                min="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="endYearOffset" className="block text-sm font-medium text-gray-700 mb-1">
-                                                End Year (Offset from now)
-                                            </label>
-                                            <input
-                                                type="number"
-                                                id="endYearOffset"
-                                                name="endYearOffset"
-                                                value={formData.endYearOffset}
-                                                onChange={handleChange}
-                                                placeholder="30"
-                                                min="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                            />
-                                        </div>
-                                    </div>
+                                    {/* Projection fields removed as per user request */}
 
                                     <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                                         <button

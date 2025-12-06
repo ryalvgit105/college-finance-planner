@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createAsset, getAssets, updateAsset, deleteAsset } from '../api/financeApi';
+import { createAsset, getAssets, updateAsset, deleteAsset, getInvestments, deleteInvestment } from '../api/financeApi';
 import { useProfile } from '../context/ProfileContext';
 import { Link } from 'react-router-dom';
 import { LuArrowLeft, LuPlus, LuPencil, LuTrash2, LuX, LuDollarSign } from 'react-icons/lu';
@@ -41,11 +41,27 @@ const Assets = () => {
     const fetchAssets = async () => {
         try {
             setFetchingAssets(true);
-            const response = await getAssets(currentProfile._id);
-            setAssets(response.data || []);
+            const [assetsRes, investmentsRes] = await Promise.all([
+                getAssets(currentProfile._id),
+                getInvestments(currentProfile._id)
+            ]);
+
+            const assetsList = assetsRes.data || [];
+            // Map investments to match asset structure for unified display
+            const investmentsList = (investmentsRes.data || []).map(inv => ({
+                ...inv,
+                type: inv.assetType || inv.type, // Handle both naming conventions
+                value: inv.currentValue,
+                description: `Investment: ${inv.name}`,
+                isInvestment: true // Flag to distinguish
+            }));
+
+            // Combine and sort by value (descending)
+            const unified = [...assetsList, ...investmentsList].sort((a, b) => b.value - a.value);
+            setAssets(unified);
         } catch (err) {
-            console.error('Error fetching assets:', err);
-            setError('Failed to load assets.');
+            console.error('Error fetching data:', err);
+            setError('Failed to load assets and portfolio.');
         } finally {
             setFetchingAssets(false);
         }
@@ -132,17 +148,24 @@ const Assets = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this asset?')) return;
+    const handleDelete = async (id, isInvestment) => {
+        if (!id) return;
+
+        const typeLabel = isInvestment ? 'investment' : 'asset';
+        if (!window.confirm(`Are you sure you want to delete this ${typeLabel}?`)) return;
 
         try {
-            await deleteAsset(id);
-            setSuccess('Asset deleted successfully!');
+            if (isInvestment) {
+                await deleteInvestment(id);
+            } else {
+                await deleteAsset(id);
+            }
+            setSuccess(`${isInvestment ? 'Investment' : 'Asset'} deleted successfully!`);
             await fetchAssets();
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-            console.error('Error deleting asset:', err);
-            setError('Failed to delete asset.');
+            console.error(`Error deleting ${typeLabel}:`, err);
+            setError(`Failed to delete ${typeLabel}.`);
         }
     };
 
@@ -164,12 +187,20 @@ const Assets = () => {
                     <h2 className="text-3xl font-bold text-gray-800">Assets</h2>
                     <p className="text-gray-600">Track your savings, investments, and valuable possessions</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                >
-                    <LuPlus className="mr-2" /> Add New Asset
-                </button>
+                <div className="flex gap-2">
+                    <Link
+                        to="/investments"
+                        className="inline-flex items-center px-4 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm"
+                    >
+                        <LuDollarSign className="mr-2" /> Manage Investments
+                    </Link>
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                    >
+                        <LuPlus className="mr-2" /> Add Simple Asset
+                    </button>
+                </div>
             </div>
 
             {/* Success Message */}
@@ -247,29 +278,40 @@ const Assets = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {assets.map((asset) => (
-                                    <tr key={asset._id} className="hover:bg-gray-50 transition-colors">
+                                {assets.map((item) => (
+                                    <tr key={item._id} className={item.isInvestment ? "bg-indigo-50/30 hover:bg-indigo-50 transition-colors" : "hover:bg-gray-50 transition-colors"}>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                {asset.type}
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.isInvestment ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'} capitalize`}>
+                                                {item.type}
                                             </span>
+                                            {item.isInvestment && <span className="ml-2 text-[10px] text-indigo-600 font-semibold tracking-wider uppercase">INV</span>}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                                            {asset.description || '-'}
+                                            {item.description || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
-                                            ${asset.value?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            ${item.value?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {item.isInvestment ? (
+                                                <Link
+                                                    to="/investments"
+                                                    className="text-indigo-600 hover:text-indigo-900 mr-4 transition-colors inline-block"
+                                                    title="Manage in Investments"
+                                                >
+                                                    <LuPencil className="w-4 h-4" />
+                                                </Link>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleOpenModal(item)}
+                                                    className="text-blue-600 hover:text-blue-900 mr-4 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <LuPencil className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             <button
-                                                onClick={() => handleOpenModal(asset)}
-                                                className="text-blue-600 hover:text-blue-900 mr-4 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <LuPencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(asset._id)}
+                                                onClick={() => handleDelete(item._id, item.isInvestment)}
                                                 className="text-red-600 hover:text-red-900 transition-colors"
                                                 title="Delete"
                                             >

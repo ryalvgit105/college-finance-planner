@@ -6,6 +6,7 @@ const Goal = require('../models/Goal');
 const Milestone = require('../models/Milestone');
 const Tax = require('../models/Tax');
 const Benefits = require('../models/Benefits');
+const Investment = require('../models/Investment');
 const { calculateNetIncome } = require('../utils/incomeCalculator');
 const { calculateAllocations } = require('../utils/allocationEngine');
 
@@ -24,7 +25,7 @@ exports.getDashboardSummary = async (req, res) => {
         }
 
         // 1. Fetch Data in Parallel
-        const [assets, debts, incomeRecords, spending, goals, milestones, taxSettings, benefits] = await Promise.all([
+        const [assets, debts, incomeRecords, spending, goals, milestones, taxSettings, benefits, investments] = await Promise.all([
             Asset.find({ profileId }),
             Debt.find({ profileId }),
             Income.find({ profileId }).sort({ createdAt: -1 }).limit(1),
@@ -38,13 +39,22 @@ exports.getDashboardSummary = async (req, res) => {
             Goal.find({ profileId }),
             Milestone.find({ profileId }),
             Tax.findOne({ profileId }),
-            Benefits.findOne({ profileId })
+            Benefits.findOne({ profileId }),
+            Investment.find({ profileId })
         ]);
 
         // 2. Calculate Aggregates
 
+        // 2. Calculate Aggregates
+
         // Total Assets
-        const totalAssets = assets.reduce((sum, asset) => sum + (asset.value || 0), 0);
+        const totalSimpleAssets = assets.reduce((sum, asset) => sum + (asset.value || 0), 0);
+
+        // Total Investments
+        const totalInvestments = investments.reduce((sum, inv) => sum + (inv.currentValue || 0), 0);
+
+        // Combined Total Assets (Assets + Investments)
+        const totalAssets = totalSimpleAssets + totalInvestments;
 
         // Total Debts
         const totalDebts = debts.reduce((sum, debt) => sum + (debt.balance || 0), 0);
@@ -60,7 +70,7 @@ exports.getDashboardSummary = async (req, res) => {
         // Monthly Spending (Sum of current month)
         const monthlySpending = spending.reduce((sum, item) => sum + (item.amount || 0), 0);
 
-        // Net Worth
+        // Net Worth (Total Assets - Debts)
         const netWorth = totalAssets - totalDebts;
 
         // Monthly Savings (Net Income - Spending)
@@ -89,6 +99,8 @@ exports.getDashboardSummary = async (req, res) => {
         // 4. Construct Payload
         const payload = {
             assets: totalAssets,
+            simpleAssets: totalSimpleAssets,
+            investments: totalInvestments,
             debts: totalDebts,
             income: netMonthlyIncome, // Updated to Net Monthly
             grossIncome: grossAnnualIncome / 12, // Keep gross for reference if needed

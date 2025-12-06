@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDashboardSummary, getAssets, getMilestones, getGoals, getSpending } from '../api/financeApi';
+import { getDashboardSummary, getAssets, getInvestments, getMilestones, getGoals, getSpending } from '../api/financeApi';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
@@ -18,6 +18,7 @@ const Dashboard = () => {
         monthlySavings: 0
     });
     const [assetsList, setAssetsList] = useState([]);
+    const [investmentsList, setInvestmentsList] = useState([]);
     const [milestones, setMilestones] = useState([]);
     const [goals, setGoals] = useState([]);
     const [spendingList, setSpendingList] = useState([]);
@@ -34,6 +35,7 @@ const Dashboard = () => {
                 assets: 0, income: 0, spending: 0, debts: 0, netWorth: 0, savingsRate: 0, monthlySavings: 0
             });
             setAssetsList([]);
+            setInvestmentsList([]);
             setMilestones([]);
             setGoals([]);
             setSpendingList([]);
@@ -46,9 +48,10 @@ const Dashboard = () => {
             setLoading(true);
             setError(null);
             const profileId = currentProfile._id;
-            const [summaryData, assetsData, milestonesData, goalsData, spendingData] = await Promise.all([
+            const [summaryData, assetsData, investmentsData, milestonesData, goalsData, spendingData] = await Promise.all([
                 getDashboardSummary(profileId),
                 getAssets(profileId),
+                getInvestments(profileId),
                 getMilestones(profileId),
                 getGoals(profileId),
                 getSpending(profileId)
@@ -56,6 +59,7 @@ const Dashboard = () => {
 
             setFinancialData(summaryData);
             setAssetsList(assetsData.data || []);
+            setInvestmentsList(investmentsData.data || []);
             setMilestones(milestonesData.data || []);
             setGoals(goalsData.data || []);
             setSpendingList(spendingData.data || []);
@@ -170,18 +174,50 @@ const Dashboard = () => {
 
                     {/* Summary Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Assets Card */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
+                        {/* Total Assets Card */}
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-600 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-700">Assets</h3>
-                                <div className="text-green-500">
+                                <h3 className="text-lg font-semibold text-gray-700">Total Assets</h3>
+                                <div className="text-green-600">
                                     <AssetsIcon />
                                 </div>
                             </div>
                             <p className="text-3xl font-bold text-gray-900">
                                 ${financialData.assets.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
-                            <p className="text-sm text-green-600 mt-2 font-medium">↑ Total value</p>
+                            <p className="text-sm text-green-700 mt-2 font-medium">↑ Global Net Worth</p>
+                        </div>
+
+                        {/* Investments Card */}
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow duration-300">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-700">Investments</h3>
+                                <div className="text-indigo-500">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <p className="text-3xl font-bold text-gray-900">
+                                ${financialData.investments?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                            </p>
+                            <p className="text-sm text-indigo-600 mt-2 font-medium">Portfolio Value</p>
+                        </div>
+
+                        {/* Fixed/Simple Assets Card */}
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500 hover:shadow-xl transition-shadow duration-300">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-700">Fixed Assets</h3>
+                                <div className="text-teal-500">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <p className="text-3xl font-bold text-gray-900">
+                                ${financialData.simpleAssets?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                            </p>
+                            <p className="text-sm text-teal-600 mt-2 font-medium">Savings, Property, Vehicles</p>
                         </div>
 
                         {/* Income Card */}
@@ -239,7 +275,7 @@ const Dashboard = () => {
                             {/* Asset Distribution Pie Chart */}
                             <div className="bg-white rounded-lg shadow-lg p-6">
                                 <h3 className="text-xl font-bold text-gray-800 mb-4">Asset Distribution</h3>
-                                {assetsList.length === 0 ? (
+                                {assetsList.length === 0 && investmentsList.length === 0 ? (
                                     <div className="flex items-center justify-center h-64 text-gray-500">
                                         <div className="text-center">
                                             <svg className="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -255,21 +291,29 @@ const Dashboard = () => {
                                         <PieChart>
                                             <Pie
                                                 data={(() => {
-                                                    // Group assets by type and sum values
-                                                    const grouped = assetsList.reduce((acc, asset) => {
+                                                    // Helper to normalize and sum
+                                                    const combinedData = {};
+
+                                                    // 1. Process Fixed Assets
+                                                    assetsList.forEach(asset => {
                                                         const type = asset.type || 'Other';
-                                                        if (!acc[type]) {
-                                                            acc[type] = 0;
-                                                        }
-                                                        acc[type] += asset.value || 0;
-                                                        return acc;
-                                                    }, {});
+                                                        if (!combinedData[type]) combinedData[type] = 0;
+                                                        combinedData[type] += asset.value || 0;
+                                                    });
+
+                                                    // 2. Process Investments
+                                                    investmentsList.forEach(inv => {
+                                                        const type = inv.assetType ?
+                                                            (inv.assetType.charAt(0).toUpperCase() + inv.assetType.slice(1)) :
+                                                            'Investment';
+                                                        if (!combinedData[type]) combinedData[type] = 0;
+                                                        combinedData[type] += inv.currentValue || 0;
+                                                    });
 
                                                     // Convert to array format for Recharts
-                                                    return Object.entries(grouped).map(([name, value]) => ({
-                                                        name,
-                                                        value
-                                                    }));
+                                                    return Object.entries(combinedData)
+                                                        .map(([name, value]) => ({ name, value }))
+                                                        .sort((a, b) => b.value - a.value); // Sort largest to smallest
                                                 })()}
                                                 cx="50%"
                                                 cy="50%"
@@ -280,30 +324,27 @@ const Dashboard = () => {
                                                 dataKey="value"
                                             >
                                                 {(() => {
-                                                    // Color palette matching site theme
+                                                    // Extended Color Palette
                                                     const COLORS = [
                                                         '#10b981', // green-500
                                                         '#3b82f6', // blue-500
-                                                        '#ef4444', // red-500
+                                                        '#6366f1', // indigo-500 (Investments preferred)
                                                         '#f59e0b', // amber-500
                                                         '#8b5cf6', // violet-500
                                                         '#ec4899', // pink-500
                                                         '#14b8a6', // teal-500
                                                         '#f97316', // orange-500
-                                                        '#6366f1', // indigo-500
+                                                        '#ef4444', // red-500
                                                         '#84cc16', // lime-500
                                                     ];
 
-                                                    const grouped = assetsList.reduce((acc, asset) => {
-                                                        const type = asset.type || 'Other';
-                                                        if (!acc[type]) {
-                                                            acc[type] = 0;
-                                                        }
-                                                        acc[type] += asset.value || 0;
-                                                        return acc;
-                                                    }, {});
+                                                    // Re-calculate length to ensure colors map correctly
+                                                    const uniqueTypesCount = new Set([
+                                                        ...assetsList.map(a => a.type || 'Other'),
+                                                        ...investmentsList.map(i => i.assetType ? (i.assetType.charAt(0).toUpperCase() + i.assetType.slice(1)) : 'Investment')
+                                                    ]).size;
 
-                                                    return Object.keys(grouped).map((entry, index) => (
+                                                    return Array.from({ length: uniqueTypesCount || 10 }).map((_, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ));
                                                 })()}
@@ -320,63 +361,91 @@ const Dashboard = () => {
                             {/* Net Worth Summary Card */}
                             <div className="bg-white rounded-lg shadow-lg p-6">
                                 <h3 className="text-xl font-bold text-gray-800 mb-6">Net Worth Summary</h3>
-                                <div className="space-y-4">
-                                    {/* Total Assets */}
-                                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                                        <div className="flex items-center">
-                                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
+                                <div className="flex flex-col lg:flex-row gap-8 items-center">
+                                    {/* Left: Stats List */}
+                                    <div className="w-full lg:w-1/2 space-y-4">
+                                        {/* Total Assets */}
+                                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Total Assets</p>
+                                                    <p className="text-lg font-semibold text-gray-800">
+                                                        ${financialData.assets.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Total Assets</p>
-                                                <p className="text-lg font-semibold text-gray-800">
-                                                    ${financialData.assets.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
+                                            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                            </svg>
                                         </div>
-                                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                        </svg>
-                                    </div>
 
-                                    {/* Total Debts */}
-                                    <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-                                        <div className="flex items-center">
-                                            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
-                                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                                </svg>
+                                        {/* Total Debts */}
+                                        <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-gray-600">Total Debts</p>
+                                                    <p className="text-lg font-semibold text-gray-800">
+                                                        ${financialData.debts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Total Debts</p>
-                                                <p className="text-lg font-semibold text-gray-800">
-                                                    ${financialData.debts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
+                                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
                                         </div>
-                                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                        </svg>
-                                    </div>
 
-                                    {/* Net Worth */}
-                                    <div className={`p-6 rounded-lg border-2 ${financialData.netWorth >= 0 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300' : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-300'}`}>
-                                        <p className="text-sm text-gray-600 mb-2">Net Worth</p>
-                                        <div className="flex items-baseline">
-                                            <p className={`text-4xl font-bold ${financialData.netWorth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                ${Math.abs(financialData.netWorth).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        {/* Net Worth */}
+                                        <div className={`p-6 rounded-lg border-2 ${financialData.netWorth >= 0 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300' : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-300'}`}>
+                                            <p className="text-sm text-gray-600 mb-2">Net Worth</p>
+                                            <div className="flex items-baseline">
+                                                <p className={`text-4xl font-bold ${financialData.netWorth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    ${Math.abs(financialData.netWorth).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </p>
+                                                {financialData.netWorth < 0 && (
+                                                    <span className="ml-2 text-red-600 text-xl font-semibold">(Negative)</span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-2">
+                                                {financialData.netWorth >= 0
+                                                    ? '✓ Your assets exceed your debts'
+                                                    : '⚠ Your debts exceed your assets'}
                                             </p>
-                                            {financialData.netWorth < 0 && (
-                                                <span className="ml-2 text-red-600 text-xl font-semibold">(Negative)</span>
-                                            )}
                                         </div>
-                                        <p className="text-sm text-gray-600 mt-2">
-                                            {financialData.netWorth >= 0
-                                                ? '✓ Your assets exceed your debts'
-                                                : '⚠ Your debts exceed your assets'}
-                                        </p>
+                                    </div>
+
+                                    {/* Right: Pie Chart */}
+                                    <div className="w-full lg:w-1/2 h-64">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Net Worth', value: Math.max(0, financialData.netWorth), fill: '#10b981' }, // green-500
+                                                        { name: 'Debts', value: financialData.debts, fill: '#ef4444' } // red-500
+                                                    ]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    <Cell key="cell-networth" fill="#10b981" />
+                                                    <Cell key="cell-debts" fill="#ef4444" />
+                                                </Pie>
+                                                <Tooltip formatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
                                     </div>
                                 </div>
                             </div>

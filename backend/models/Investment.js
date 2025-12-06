@@ -6,9 +6,14 @@ const InvestmentSchema = new mongoose.Schema({
         ref: 'Profile',
         required: true
     },
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
     assetType: {
         type: String,
-        enum: ['stock', 'ETF', 'crypto', 'savings', 'brokerage', 'other'],
+        enum: ['stock', 'etf', 'crypto', 'savings', 'brokerage', 'other', 'bond', 'mutual fund', 'real estate', '401k', 'ira'],
         required: true
     },
     ticker: {

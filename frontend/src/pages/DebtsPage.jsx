@@ -142,10 +142,21 @@ const Debts = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this debt?')) return;
+        console.log('DebtsPage: handleDelete called with ID:', id); // DEBUG
+        if (!id) {
+            console.error('Error: No ID provided to handleDelete');
+            return;
+        }
+
+        if (!window.confirm('Are you sure you want to delete this debt?')) {
+            console.log('Delete cancelled by user');
+            return;
+        }
 
         try {
+            console.log('Calling deleteDebt API...');
             await deleteDebt(id);
+            console.log('Debt deleted successfully, fetching new list...');
             setSuccess('Debt deleted successfully!');
             await fetchDebts();
             setTimeout(() => setSuccess(null), 3000);
