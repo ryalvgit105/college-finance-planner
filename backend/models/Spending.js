@@ -17,6 +17,11 @@ const spendingSchema = new mongoose.Schema({
         lowercase: true,
         maxlength: [50, 'Category cannot exceed 50 characters']
     },
+    type: {
+        type: String,
+        enum: ['fixed', 'variable'],
+        default: 'variable'
+    },
     amount: {
         type: Number,
         required: [true, 'Amount is required'],

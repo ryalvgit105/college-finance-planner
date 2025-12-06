@@ -9,7 +9,6 @@ const Sidebar = () => {
 
     const navItems = [
         { name: 'Dashboard', path: '/', icon: LuHouse, module: null },
-        { name: 'Career Path Explorer', path: '/career-path-explorer', icon: LuTarget, module: null },
         { name: 'FuturePath', path: '/future-path', icon: LuTrendingUp, module: null },
     ];
 

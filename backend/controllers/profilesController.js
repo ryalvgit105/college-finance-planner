@@ -108,6 +108,9 @@ exports.updateProfile = async (req, res) => {
             };
         }
         if (categories) profile.categories = categories;
+        if (req.body.budgets) {
+            profile.budgets = req.body.budgets;
+        }
 
         await profile.save();
 

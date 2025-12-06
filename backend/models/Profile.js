@@ -31,6 +31,16 @@ const profileSchema = new mongoose.Schema({
     categories: {
         type: [String],
         default: ['Rent', 'Groceries', 'Utilities', 'Entertainment', 'Transport']
+    },
+    budgets: {
+        type: Map,
+        of: Number,
+        default: {}
+    },
+    budgets: {
+        type: Map,
+        of: Number,
+        default: {}
     }
 }, {
     timestamps: true

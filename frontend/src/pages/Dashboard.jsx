@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { getDashboardSummary, getAssets, getInvestments, getMilestones, getGoals, getSpending } from '../api/financeApi';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
-import { useProfile } from '../context/ProfileContext';
 
 const Dashboard = () => {
     const { currentProfile } = useProfile();
@@ -141,10 +140,13 @@ const Dashboard = () => {
             {!loading && !error && (
                 <>
                     {/* Greeting Section */}
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-8 text-white">
-                        <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}! 👋</h1>
-                        <p className="text-lg opacity-90">Here's your financial overview</p>
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-8 text-white flex justify-between items-start">
+                        <div>
+                            <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}! 👋</h1>
+                            <p className="text-lg opacity-90">Here's your financial overview</p>
+                        </div>
                     </div>
+
 
                     {/* Asset Summary Card */}
                     <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
@@ -232,14 +234,7 @@ const Dashboard = () => {
                                 ${financialData.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             <p className="text-sm text-blue-600 mt-2 font-medium">Net Monthly Income</p>
-                            {financialData.federalTax > 0 && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                    After Tax: -${((financialData.federalTax + financialData.stateTax) / 12).toFixed(0)}/mo
-                                </p>
-                            )}
                         </div>
-
-                        {/* Spending Card */}
                         <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-700">Spending</h3>
@@ -252,8 +247,6 @@ const Dashboard = () => {
                             </p>
                             <p className="text-sm text-red-600 mt-2 font-medium">↓ Monthly total</p>
                         </div>
-
-                        {/* Net Worth Card */}
                         <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-700">Net Worth</h3>
@@ -449,177 +442,178 @@ const Dashboard = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Right Column: Milestones & Goals (1/3 width) */}
-                        <div className="space-y-6">
-                            {/* Monthly Spending Breakdown Chart */}
-                            <div className="bg-white rounded-lg shadow-lg p-6">
-                                <h3 className="text-xl font-bold text-gray-800 mb-4">Monthly Spending Breakdown</h3>
-                                {spendingList.length === 0 ? (
-                                    <div className="flex items-center justify-center h-64 text-gray-500">
-                                        <div className="text-center">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <p className="text-lg font-medium">No spending this month</p>
-                                            <p className="text-sm mt-1">Log expenses to see breakdown</p>
+                            {/* Right Column: Milestones & Goals (1/3 width) */}
+                            <div className="space-y-6">
+                                {/* Monthly Spending Breakdown Chart */}
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">Monthly Spending Breakdown</h3>
+                                    {spendingList.length === 0 ? (
+                                        <div className="flex items-center justify-center h-64 text-gray-500">
+                                            <div className="text-center">
+                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p className="text-lg font-medium">No spending this month</p>
+                                                <p className="text-sm mt-1">Log expenses to see breakdown</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height={300}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={(() => {
+                                                        // Filter for current month and group by category
+                                                        const currentMonth = new Date().getMonth();
+                                                        const currentYear = new Date().getFullYear();
+
+                                                        const monthlySpending = spendingList.filter(entry => {
+                                                            const entryDate = new Date(entry.date);
+                                                            return entryDate.getMonth() === currentMonth &&
+                                                                entryDate.getFullYear() === currentYear;
+                                                        });
+
+                                                        if (monthlySpending.length === 0) return [];
+
+                                                        const grouped = monthlySpending.reduce((acc, entry) => {
+                                                            const category = entry.category || 'Uncategorized';
+                                                            if (!acc[category]) {
+                                                                acc[category] = 0;
+                                                            }
+                                                            acc[category] += entry.amount || 0;
+                                                            return acc;
+                                                        }, {});
+
+                                                        return Object.entries(grouped).map(([name, value]) => ({
+                                                            name,
+                                                            value
+                                                        }));
+                                                    })()}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {(() => {
+                                                        const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'];
+                                                        // Re-calculate to match indices (simplified for display)
+                                                        return Array.from({ length: 10 }).map((_, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ));
+                                                    })()}
+                                                </Pie>
+                                                <Tooltip
+                                                    formatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                                />
+                                                <Legend verticalAlign="bottom" height={36} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    )}
+                                </div>
+
+                                {/* Upcoming Milestones */}
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-bold text-gray-800">Upcoming Milestones</h3>
+                                        <Link to="/milestones" className="text-sm text-purple-600 hover:text-purple-800 font-medium">
+                                            View All →
+                                        </Link>
+                                    </div>
+                                    {upcomingMilestones.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {upcomingMilestones.map((milestone) => (
+                                                <div key={milestone._id} className="border-l-4 border-purple-500 bg-purple-50 p-3 rounded-r-lg">
+                                                    <p className="font-semibold text-gray-800">{milestone.title}</p>
+                                                    <div className="flex items-center text-sm text-gray-600 mt-1">
+                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {new Date(milestone.date).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-6 text-gray-500">
+                                            <p>No upcoming milestones.</p>
+                                            <Link to="/milestones" className="text-purple-600 text-sm hover:underline mt-2 inline-block">
+                                                Add a milestone
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Active Goals */}
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-bold text-gray-800">Active Goals</h3>
+                                        <Link to="/goals" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                            View All →
+                                        </Link>
+                                    </div>
+                                    {activeGoals.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {activeGoals.map((goal) => (
+                                                <div key={goal._id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow bg-blue-50 border-l-4 border-l-blue-500">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex items-center">
+                                                            <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                            <p className="font-semibold text-gray-800">{goal.goalName}</p>
+                                                        </div>
+                                                        <span className="text-xs font-medium bg-white text-blue-800 px-2 py-0.5 rounded-full border border-blue-100">
+                                                            {goal.category || 'General'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                                                        <div
+                                                            className="bg-blue-600 h-2.5 rounded-full"
+                                                            style={{ width: `${Math.min(((goal.currentAmount || 0) / goal.targetAmount) * 100, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs text-gray-600">
+                                                        <span>${(goal.currentAmount || 0).toLocaleString()}</span>
+                                                        <span>Target: ${goal.targetAmount.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-gray-500 text-right">
+                                                        Due: {new Date(goal.targetDate).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-6 text-gray-500">
+                                            <p>No active goals.</p>
+                                            <Link to="/goals" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
+                                                Set a goal
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Financial Snapshot (Quick Stats) */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Stats</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                            <span className="text-sm text-gray-600">Savings Rate</span>
+                                            <span className="font-bold text-gray-900">
+                                                {((financialData.income - financialData.spending) / financialData.income * 100).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                            <span className="text-sm text-gray-600">Monthly Savings</span>
+                                            <span className="font-bold text-gray-900">
+                                                ${(financialData.income - financialData.spending).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            </span>
                                         </div>
                                     </div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <PieChart>
-                                            <Pie
-                                                data={(() => {
-                                                    // Filter for current month and group by category
-                                                    const currentMonth = new Date().getMonth();
-                                                    const currentYear = new Date().getFullYear();
-
-                                                    const monthlySpending = spendingList.filter(entry => {
-                                                        const entryDate = new Date(entry.date);
-                                                        return entryDate.getMonth() === currentMonth &&
-                                                            entryDate.getFullYear() === currentYear;
-                                                    });
-
-                                                    if (monthlySpending.length === 0) return [];
-
-                                                    const grouped = monthlySpending.reduce((acc, entry) => {
-                                                        const category = entry.category || 'Uncategorized';
-                                                        if (!acc[category]) {
-                                                            acc[category] = 0;
-                                                        }
-                                                        acc[category] += entry.amount || 0;
-                                                        return acc;
-                                                    }, {});
-
-                                                    return Object.entries(grouped).map(([name, value]) => ({
-                                                        name,
-                                                        value
-                                                    }));
-                                                })()}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                            >
-                                                {(() => {
-                                                    const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'];
-                                                    // Re-calculate to match indices (simplified for display)
-                                                    return Array.from({ length: 10 }).map((_, index) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                    ));
-                                                })()}
-                                            </Pie>
-                                            <Tooltip
-                                                formatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                                            />
-                                            <Legend verticalAlign="bottom" height={36} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </div>
-
-                            {/* Upcoming Milestones */}
-                            <div className="bg-white rounded-lg shadow-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-bold text-gray-800">Upcoming Milestones</h3>
-                                    <Link to="/milestones" className="text-sm text-purple-600 hover:text-purple-800 font-medium">
-                                        View All →
-                                    </Link>
-                                </div>
-                                {upcomingMilestones.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {upcomingMilestones.map((milestone) => (
-                                            <div key={milestone._id} className="border-l-4 border-purple-500 bg-purple-50 p-3 rounded-r-lg">
-                                                <p className="font-semibold text-gray-800">{milestone.title}</p>
-                                                <div className="flex items-center text-sm text-gray-600 mt-1">
-                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {new Date(milestone.date).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-6 text-gray-500">
-                                        <p>No upcoming milestones.</p>
-                                        <Link to="/milestones" className="text-purple-600 text-sm hover:underline mt-2 inline-block">
-                                            Add a milestone
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Active Goals */}
-                            <div className="bg-white rounded-lg shadow-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-bold text-gray-800">Active Goals</h3>
-                                    <Link to="/goals" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                        View All →
-                                    </Link>
-                                </div>
-                                {activeGoals.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {activeGoals.map((goal) => (
-                                            <div key={goal._id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow bg-blue-50 border-l-4 border-l-blue-500">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex items-center">
-                                                        <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                        </svg>
-                                                        <p className="font-semibold text-gray-800">{goal.goalName}</p>
-                                                    </div>
-                                                    <span className="text-xs font-medium bg-white text-blue-800 px-2 py-0.5 rounded-full border border-blue-100">
-                                                        {goal.category || 'General'}
-                                                    </span>
-                                                </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-                                                    <div
-                                                        className="bg-blue-600 h-2.5 rounded-full"
-                                                        style={{ width: `${Math.min(((goal.currentAmount || 0) / goal.targetAmount) * 100, 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                                <div className="flex justify-between text-xs text-gray-600">
-                                                    <span>${(goal.currentAmount || 0).toLocaleString()}</span>
-                                                    <span>Target: ${goal.targetAmount.toLocaleString()}</span>
-                                                </div>
-                                                <div className="mt-1 text-xs text-gray-500 text-right">
-                                                    Due: {new Date(goal.targetDate).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-6 text-gray-500">
-                                        <p>No active goals.</p>
-                                        <Link to="/goals" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
-                                            Set a goal
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Financial Snapshot (Moved to sidebar column) */}
-                            <div className="bg-white rounded-lg shadow-md p-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Stats</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                        <span className="text-sm text-gray-600">Savings Rate</span>
-                                        <span className="font-bold text-gray-900">
-                                            {((financialData.income - financialData.spending) / financialData.income * 100).toFixed(1)}%
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                        <span className="text-sm text-gray-600">Monthly Savings</span>
-                                        <span className="font-bold text-gray-900">
-                                            ${(financialData.income - financialData.spending).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
+                            )}
                         </div>
                     </div>
                 </>

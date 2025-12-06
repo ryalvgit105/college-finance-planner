@@ -5,7 +5,7 @@ const Spending = require('../models/Spending');
 // @access  Public (will add auth later)
 exports.logSpending = async (req, res) => {
     try {
-        const { profileId, date, category, amount, notes } = req.body;
+        const { profileId, date, category, type, amount, notes } = req.body;
 
         if (!profileId) {
             return res.status(400).json({
@@ -18,6 +18,7 @@ exports.logSpending = async (req, res) => {
             profileId,
             date,
             category,
+            type: type || 'variable', // Default to variable if not provided
             amount,
             notes
         });
@@ -54,11 +55,23 @@ exports.logSpending = async (req, res) => {
 // @access  Public (will add auth later)
 exports.getAllSpending = async (req, res) => {
     try {
-        const { profileId } = req.query;
+        const { profileId, month } = req.query;
         let query = {};
 
         if (profileId) {
             query.profileId = profileId;
+        }
+
+        // Filter by month if provided (YYYY-MM)
+        if (month) {
+            const [year, monthNum] = month.split('-');
+            const startDate = new Date(year, monthNum - 1, 1);
+            const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
+
+            query.date = {
+                $gte: startDate,
+                $lte: endDate
+            };
         }
 
         const spendingEntries = await Spending.find(query).sort({ date: -1 });

@@ -175,9 +175,11 @@ export const logSpending = async (spendingData) => {
 
 export const createSpending = logSpending;
 
-export const getSpending = async (profileId) => {
+export const getSpending = async (profileId, month) => {
     try {
         const params = profileId ? { profileId } : {};
+        if (month) params.month = month;
+
         const response = await api.get('/api/spending', { params });
         return response.data;
     } catch (error) {

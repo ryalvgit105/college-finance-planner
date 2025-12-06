@@ -14,7 +14,6 @@ import InvestmentTracker from './pages/InvestmentTracker';
 import GoalPlanner from './pages/GoalPlanner';
 
 import Settings from './pages/Settings';
-import CareerPathExplorer from './pages/CareerPathExplorer';
 import AssetsPage from './pages/AssetsPage.jsx';
 import DebtsPage from './pages/DebtsPage.jsx';
 import IncomePage from './pages/IncomePage.jsx';
@@ -41,7 +40,6 @@ function App() {
                             <Route path="investments" element={<InvestmentsPage />} />
                             <Route path="goal-planner" element={<GoalPlanner />} />
                             <Route path="settings" element={<Settings />} />
-                            <Route path="career-path-explorer" element={<CareerPathExplorer />} />
                             <Route path="future-path" element={<FuturePathPage />} />
                         </Route>
                     </Routes>
