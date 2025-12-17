@@ -18,7 +18,10 @@ import AssetsPage from './pages/AssetsPage.jsx';
 import DebtsPage from './pages/DebtsPage.jsx';
 import IncomePage from './pages/IncomePage.jsx';
 import SpendingPage from './pages/SpendingPage.jsx';
+import SpendingManager from './pages/SpendingManager.jsx';
+import SpendingAnalysisPage from './pages/spending-analysis/SpendingAnalysisPage.jsx';
 import InvestmentsPage from './pages/InvestmentsPage.jsx';
+import RealEstatePage from './pages/RealEstatePage.jsx';
 
 function App() {
     return (
@@ -32,7 +35,10 @@ function App() {
                             <Route path="assets" element={<AssetsPage />} />
                             <Route path="debts" element={<DebtsPage />} />
                             <Route path="income" element={<IncomePage />} />
-                            <Route path="spending" element={<SpendingPage />} />
+                            <Route path="budget-planner" element={<SpendingManager />} />
+                            <Route path="spending-analysis" element={<SpendingAnalysisPage />} />
+                            <Route path="spending" element={<Navigate to="/budget-planner" replace />} />
+                            <Route path="real-estate" element={<RealEstatePage />} />
                             <Route path="goals" element={<Goals />} />
                             <Route path="milestones" element={<Milestones />} />
                             <Route path="tax-benefits" element={<TaxBenefits />} />

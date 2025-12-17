@@ -62,16 +62,29 @@ exports.getAllSpending = async (req, res) => {
             query.profileId = profileId;
         }
 
-        // Filter by month if provided (YYYY-MM)
+        // Filter by month (YYYY-MM) or year (YYYY) if provided
         if (month) {
-            const [year, monthNum] = month.split('-');
-            const startDate = new Date(year, monthNum - 1, 1);
-            const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
+            if (month.length === 4) {
+                // YYYY (Yearly filter)
+                const year = parseInt(month);
+                const startDate = new Date(year, 0, 1);
+                const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
 
-            query.date = {
-                $gte: startDate,
-                $lte: endDate
-            };
+                query.date = {
+                    $gte: startDate,
+                    $lte: endDate
+                };
+            } else {
+                // YYYY-MM (Monthly filter)
+                const [year, monthNum] = month.split('-');
+                const startDate = new Date(year, monthNum - 1, 1);
+                const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
+
+                query.date = {
+                    $gte: startDate,
+                    $lte: endDate
+                };
+            }
         }
 
         const spendingEntries = await Spending.find(query).sort({ date: -1 });

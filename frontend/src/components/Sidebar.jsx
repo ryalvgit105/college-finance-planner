@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
-import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings, LuTrendingUp, LuTarget, LuChevronRight, LuChevronDown } from 'react-icons/lu';
+import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrophy, LuCalendar, LuSettings, LuTrendingUp, LuTarget, LuChevronRight, LuChevronDown, LuBuilding, LuBanknote } from 'react-icons/lu';
 
 const Sidebar = () => {
     const { currentProfile } = useProfile();
     const [isBaseProfileOpen, setIsBaseProfileOpen] = useState(false);
+    const [isFinancialToolsOpen, setIsFinancialToolsOpen] = useState(true); // Default open
 
     const navItems = [
         { name: 'Dashboard', path: '/', icon: LuHouse, module: null },
+    ];
+
+    const financialToolItems = [
         { name: 'FuturePath', path: '/future-path', icon: LuTrendingUp, module: null },
+        { name: 'Spending & Budget', path: '/budget-planner', icon: LuBanknote },
     ];
 
     const baseProfileItems = [
         { name: 'Assets', path: '/assets', icon: LuDollarSign },
         { name: 'Debts', path: '/debts', icon: LuCreditCard },
         { name: 'Income', path: '/income', icon: LuLandmark },
-        { name: 'Spending', path: '/spending', icon: LuShoppingCart },
+        { name: 'Spending Analysis', path: '/spending-analysis', icon: LuBanknote },
         { name: 'Investments', path: '/investments', icon: LuTrendingUp },
+        { name: 'Real Estate', path: '/real-estate', icon: LuBuilding },
     ];
 
     // Filter items based on enabled modules
@@ -52,6 +58,42 @@ const Sidebar = () => {
                             </NavLink>
                         );
                     })}
+
+                    {/* Financial Tools Collapsible Section */}
+                    <div className="pt-2">
+                        <button
+                            onClick={() => setIsFinancialToolsOpen(!isFinancialToolsOpen)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200"
+                        >
+                            <span className="font-medium flex items-center">
+                                <span className="mr-3">Financial Tools</span>
+                            </span>
+                            {isFinancialToolsOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
+                        </button>
+
+                        {isFinancialToolsOpen && (
+                            <div className="ml-4 mt-1 space-y-1 border-l border-gray-600 pl-2">
+                                {financialToolItems.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <NavLink
+                                            key={item.path}
+                                            to={item.path}
+                                            className={({ isActive }) =>
+                                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
+                                                    ? 'text-[#C6AA76] font-semibold'
+                                                    : 'text-gray-400 hover:text-[#D4B483]'
+                                                }`
+                                            }
+                                        >
+                                            <Icon size={16} />
+                                            <span>{item.name}</span>
+                                        </NavLink>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Base Profile Collapsible Section */}
                     <div className="pt-2">
@@ -91,20 +133,7 @@ const Sidebar = () => {
                 </nav>
             </div>
 
-            <div className="p-6 border-t border-[#A7A8AA]">
-                <NavLink
-                    to="/settings"
-                    className={({ isActive }) =>
-                        `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                            ? 'bg-[#C6AA76] text-white shadow-lg'
-                            : 'text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483]'
-                        }`
-                    }
-                >
-                    <LuSettings size={20} />
-                    <span className="font-medium">Settings</span>
-                </NavLink>
-            </div>
+
         </aside>
     );
 };
