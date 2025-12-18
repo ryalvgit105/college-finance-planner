@@ -1,127 +1,198 @@
-import React, { useState, useEffect, useRef } from 'react';
-import BudgetPlanner from './budget-planner/BudgetPlanner';
-import BudgetComparisonPage from './spending-analysis/BudgetComparisonPage';
-import SpendingTracker from './spending-tracker/SpendingTracker';
-import { LuShoppingCart, LuScale, LuCalendar } from 'react-icons/lu';
+import React, { useState, useMemo, useCallback } from 'react';
+import YearlyView from './spending-tracker/components/YearlyView';
+import MonthlyView from './spending-tracker/components/MonthlyView';
+import DayModal from './spending-tracker/components/DayModal';
+import { INITIAL_EXPENSES, MONTH_NAMES, INITIAL_BUDGET_ITEMS, INITIAL_INCOME_ITEMS } from './spending-tracker/constants';
 
 const SpendingManager = () => {
-    const [activeTab, setActiveTab] = useState('budget');
-    const [tabs, setTabs] = useState([
-        { id: 'budget', label: 'Budget Planner', icon: LuShoppingCart },
-        { id: 'comparison', label: 'Budget Comparison', icon: LuScale },
-        { id: 'tracker', label: 'Calendar Tracker', icon: LuCalendar }
-    ]);
-    const dragItem = useRef(null);
-    const dragOverItem = useRef(null);
+    const [currentView, setCurrentView] = useState('yearly');
+    const [currentDate, setCurrentDate] = useState(new Date('2025-01-01T00:00:00'));
+    const [expenses, setExpenses] = useState(INITIAL_EXPENSES);
+    const [budgetItems, setBudgetItems] = useState(INITIAL_BUDGET_ITEMS);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [incomeItems, setIncomeItems] = useState(INITIAL_INCOME_ITEMS);
+    const [isBudgetEditing, setIsBudgetEditing] = useState(false);
 
-    // Load saved order from local storage on mount
-    useEffect(() => {
-        const savedOrder = localStorage.getItem('spendingManagerTabOrder');
-        if (savedOrder) {
-            try {
-                const parsedOrder = JSON.parse(savedOrder);
-                // Verify all saved IDs exist in current tabs definition to avoid stale data issues
-                const currentIds = new Set(['budget', 'comparison', 'tracker']);
-                const isValid = parsedOrder.every(t => currentIds.has(t.id)) && parsedOrder.length === 3;
+    const totalIncome = useMemo(() => incomeItems.reduce((sum, item) => sum + item.amount, 0), [incomeItems]);
 
-                if (isValid) {
-                    // Reconstruct the full tab objects with icons
-                    const reorderedTabs = parsedOrder.map(savedTab => {
-                        const originalTab = tabs.find(t => t.id === savedTab.id);
-                        return { ...savedTab, icon: originalTab?.icon || LuShoppingCart }; // Fallback icon
-                    });
-                    setTabs(reorderedTabs);
-                }
-            } catch (e) {
-                console.error("Failed to parse tab order", e);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    const toggleBudgetEditing = useCallback(() => {
+        setIsBudgetEditing(prev => !prev);
     }, []);
 
-    const handleDragStart = (e, position) => {
-        dragItem.current = position;
-        e.dataTransfer.effectAllowed = "move";
-        e.target.classList.add('opacity-50');
-    };
+    const handleYearChange = useCallback((direction) => {
+        setCurrentDate(prevDate => {
+            const newYear = direction === 'next' ? prevDate.getFullYear() + 1 : prevDate.getFullYear() - 1;
+            return new Date(newYear, prevDate.getMonth(), 1);
+        });
+    }, []);
 
-    const handleDragEnter = (e, position) => {
-        dragOverItem.current = position;
-        e.preventDefault();
-    };
+    const handleSelectMonth = useCallback((monthIndex) => {
+        setCurrentDate(new Date(currentDate.getFullYear(), monthIndex, 1));
+        setCurrentView('monthly');
+    }, [currentDate]);
 
-    const handleDragEnd = (e) => {
-        e.target.classList.remove('opacity-50');
-        const copyListItems = [...tabs];
-        const dragItemContent = copyListItems[dragItem.current];
+    const handleNavigateMonth = useCallback((direction) => {
+        setCurrentDate(prevDate => {
+            const newMonth = direction === 'next' ? prevDate.getMonth() + 1 : prevDate.getMonth() - 1;
+            return new Date(prevDate.getFullYear(), newMonth, 1);
+        });
+    }, []);
 
-        // Remove item from old pos and insert at new pos
-        copyListItems.splice(dragItem.current, 1);
-        copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+    const handleSelectDay = useCallback((day) => {
+        setSelectedDay(day);
+    }, []);
 
-        dragItem.current = null;
-        dragOverItem.current = null;
-        setTabs(copyListItems);
+    const handleCloseModal = useCallback(() => {
+        setSelectedDay(null);
+    }, []);
 
-        // Save order (only IDs and labels needed for persistence structure, but saving full object is fine for simple use)
-        const orderToSave = copyListItems.map(({ id, label }) => ({ id, label }));
-        localStorage.setItem('spendingManagerTabOrder', JSON.stringify(orderToSave));
-    };
+    const handleAddExpense = useCallback((newExpense) => {
+        setExpenses(prev => [...prev, { ...newExpense, id: Date.now().toString() }]);
+    }, []);
 
-    // Prevent default behavior to allow drop
-    const handleDragOver = (e) => {
-        e.preventDefault();
-    }
+    const handleDeleteExpense = useCallback((expenseId) => {
+        setExpenses(prev => prev.filter(exp => exp.id !== expenseId));
+    }, []);
+
+    const handleAddBudgetItem = useCallback((newItem) => {
+        setBudgetItems(prev => [...prev, { ...newItem, id: `b-${Date.now()}` }]);
+    }, []);
+
+    const handleDeleteBudgetItem = useCallback((itemId) => {
+        setBudgetItems(prev => prev.filter(item => item.id !== itemId));
+    }, []);
+
+    const handleAddIncomeItem = useCallback((newItem) => {
+        setIncomeItems(prev => [...prev, { ...newItem, id: `i-${Date.now()}` }]);
+    }, []);
+
+    const handleDeleteIncomeItem = useCallback((itemId) => {
+        setIncomeItems(prev => prev.filter(item => item.id !== itemId));
+    }, []);
+
+    const handleBackToYearly = useCallback(() => {
+        setCurrentView('yearly');
+        setIsBudgetEditing(false); // Exit editing mode when leaving monthly view
+    }, []);
+
+    const expensesByYear = useMemo(() => {
+        const yearlyData = {};
+        const currentYear = currentDate.getFullYear();
+        MONTH_NAMES.forEach((_, index) => {
+            yearlyData[index] = 0;
+        });
+        expenses.forEach(expense => {
+            // Ensure date string is parsed correctly across timezones by treating it as UTC
+            const expenseDate = new Date(expense.date + 'T00:00:00');
+            if (expenseDate.getFullYear() === currentYear) {
+                const month = expenseDate.getMonth();
+                yearlyData[month] += expense.amount;
+            }
+        });
+        return yearlyData;
+    }, [expenses, currentDate]);
+
+    const expensesForSelectedDay = useMemo(() => {
+        if (!selectedDay) return [];
+        const selectedDateString = selectedDay.toISOString().split('T')[0];
+        return expenses.filter(exp => exp.date === selectedDateString);
+    }, [selectedDay, expenses]);
 
     return (
-        <div className="flex flex-col h-full bg-[#0C0C0D] min-h-screen">
-            {/* Tab Navigation Bar */}
-            <div className="bg-[#111214] border-b border-[#2C2C2E] px-6 py-2 sticky top-0 z-20">
-                <div className="flex gap-4 overflow-x-auto hidden-scrollbar">
-                    {tabs.map((tab, index) => {
-                        const Icon = tab.icon;
-                        return (
-                            <div
-                                key={tab.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragEnter={(e) => handleDragEnter(e, index)}
-                                onDragEnd={handleDragEnd}
-                                onDragOver={handleDragOver}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-colors border-b-2 cursor-pointer 
-                                ${activeTab === tab.id
-                                        ? 'text-[#C6AA76] border-[#C6AA76] bg-[#1C1C1E]'
-                                        : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-[#1C1C1E]/50'
-                                    }`}
-                                title="Drag to reorder"
-                            >
-                                <Icon size={18} />
-                                <span className="whitespace-nowrap">{tab.label}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+        <div className="min-h-screen p-4 md:p-8 font-inter bg-[#0C0C0D] overflow-auto">
+            <header className="text-center mb-10">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-violet-400">
+                    Spending/ Budget Tracker
+                </h1>
+                <p className="text-slate-400 mt-2 text-lg">Your visual guide to financial clarity.</p>
+            </header>
 
-            {/* Content Area */}
-            <div className="flex-grow overflow-auto hidden-scrollbar">
-                {activeTab === 'budget' && (
-                    <div className="animate-fadeIn h-full">
-                        <BudgetPlanner />
-                    </div>
+            <style>{`
+        :root {
+            --glow-color-sky: rgba(56, 189, 248, 0.5);
+            --glow-color-emerald: rgba(16, 185, 129, 0.5);
+            --glow-color-rose: rgba(244, 63, 94, 0.5);
+        }
+        .card-glow-sky:hover {
+            box-shadow: 0 0 20px var(--glow-color-sky);
+        }
+        .card-glow-emerald:hover {
+            box-shadow: 0 0 15px var(--glow-color-emerald);
+        }
+        .button-glow-sky:hover {
+            box-shadow: 0 0 15px var(--glow-color-sky);
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        @keyframes subtle-fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-subtle-fade-in {
+            animation: subtle-fade-in 0.5s ease-out forwards;
+        }
+      `}</style>
+
+            {currentView === 'yearly' && (
+                <div className="flex justify-center items-center gap-4 mb-8">
+                    <button
+                        onClick={() => handleYearChange('prev')}
+                        className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 border border-slate-700 transition-all text-xl font-bold button-glow-sky text-white"
+                        aria-label="Previous year"
+                    >
+                        &lt;
+                    </button>
+                    <h2 className="text-3xl font-bold text-slate-100 w-32 text-center tabular-nums">{currentDate.getFullYear()}</h2>
+                    <button
+                        onClick={() => handleYearChange('next')}
+                        className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 border border-slate-700 transition-all text-xl font-bold button-glow-sky text-white"
+                        aria-label="Next year"
+                    >
+                        &gt;
+                    </button>
+                </div>
+            )}
+
+            <main className="max-w-7xl mx-auto">
+                {currentView === 'yearly' && (
+                    <YearlyView
+                        expensesByMonth={expensesByYear}
+                        totalIncome={totalIncome}
+                        onSelectMonth={handleSelectMonth}
+                        year={currentDate.getFullYear()}
+                    />
                 )}
-                {activeTab === 'comparison' && (
-                    <div className="animate-fadeIn">
-                        <BudgetComparisonPage />
-                    </div>
+
+                {currentView === 'monthly' && (
+                    <MonthlyView
+                        currentDate={currentDate}
+                        expenses={expenses}
+                        budgetItems={budgetItems}
+                        incomeItems={incomeItems}
+                        totalIncome={totalIncome}
+                        onSelectDay={handleSelectDay}
+                        onNavigateMonth={handleNavigateMonth}
+                        onBackToYearly={handleBackToYearly}
+                        onAddBudgetItem={handleAddBudgetItem}
+                        onDeleteBudgetItem={handleDeleteBudgetItem}
+                        onAddIncomeItem={handleAddIncomeItem}
+                        onDeleteIncomeItem={handleDeleteIncomeItem}
+                        isBudgetEditing={isBudgetEditing}
+                        toggleBudgetEditing={toggleBudgetEditing}
+                    />
                 )}
-                {activeTab === 'tracker' && (
-                    <div className="animate-fadeIn">
-                        <SpendingTracker />
-                    </div>
+
+                {selectedDay && (
+                    <DayModal
+                        date={selectedDay}
+                        expenses={expensesForSelectedDay}
+                        onClose={handleCloseModal}
+                        onAddExpense={handleAddExpense}
+                        onDeleteExpense={handleDeleteExpense}
+                    />
                 )}
-            </div>
+            </main>
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Category } from './types';
 import CategoryCard from './components/CategoryCard';
 import SummaryCard from './components/SummaryCard';
@@ -24,6 +25,26 @@ const initialItems = {
 function BudgetPlanner() {
     const [income, setIncome] = useState(2500);
     const [items, setItems] = useState(initialItems);
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const formattedMonth = currentDate.toLocaleString('default', { month: 'long' });
+    const formattedYear = currentDate.getFullYear();
+
+    const nextMonth = () => {
+        setCurrentDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(newDate.getMonth() + 1);
+            return newDate;
+        });
+    };
+
+    const prevMonth = () => {
+        setCurrentDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(newDate.getMonth() - 1);
+            return newDate;
+        });
+    };
 
     const handleIncomeChange = (e) => {
         const value = parseFloat(e.target.value);
@@ -72,9 +93,21 @@ function BudgetPlanner() {
     return (
         <div className="bg-gray-50 text-gray-800 font-sans p-4 sm:p-6 lg:p-8 h-full">
             <div className="max-w-7xl mx-auto">
-                <header className="mb-10 text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">Financial Spending Plan</h1>
-                    <p className="text-lg text-gray-500 mt-2">A clear path to your financial goals starts here.</p>
+                <header className="mb-10 flex items-center justify-center">
+                    <div className="flex items-center gap-6">
+                        <div className="text-center">
+                            <h1 className="text-4xl font-bold text-gray-900 tracking-tight leading-none">{formattedMonth}</h1>
+                            <p className="text-3xl font-normal text-gray-600 leading-tight mt-1">{formattedYear}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                                <ChevronLeft className="w-8 h-8" />
+                            </button>
+                            <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        </div>
+                    </div>
                 </header>
 
                 <main className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">

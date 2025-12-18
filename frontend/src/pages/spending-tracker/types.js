@@ -1,14 +1,7 @@
-/**
- * @typedef {Object} SpendingItem
- * @property {string} id
- * @property {string} description
- * @property {number} amount
- * @property {string} [category]
- */
-
-/**
- * @typedef {Object.<string, SpendingItem[]>} SpendingData
- * Keys are dates in 'YYYY-MM-DD' format
- */
-
-export { };
+export const BudgetCategory = {
+    DebtPayoff: 'Debt Payoff',
+    Savings: 'Savings & Investments',
+    Giving: 'Giving & Donations',
+    Fixed: 'Fixed Expenses',
+    FunMoney: 'Fun Money',
+};
