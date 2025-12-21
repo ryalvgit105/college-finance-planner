@@ -14,14 +14,14 @@ const Sidebar = () => {
 
     const financialToolItems = [
         { name: 'FuturePath', path: '/future-path', icon: LuTrendingUp, module: null },
-        { name: 'Spending & Budget', path: '/budget-planner', icon: LuBanknote },
+        { name: 'Budget Tool', path: '/budget-planner', icon: LuBanknote },
     ];
 
     const baseProfileItems = [
         { name: 'Assets', path: '/assets', icon: LuDollarSign },
         { name: 'Debts', path: '/debts', icon: LuCreditCard },
         { name: 'Income', path: '/income', icon: LuLandmark },
-        { name: 'Spending Analysis', path: '/spending-analysis', icon: LuBanknote },
+        { name: 'Spending', path: '/spending-analysis', icon: LuBanknote },
         { name: 'Investments', path: '/investments', icon: LuTrendingUp },
         { name: 'Real Estate', path: '/real-estate', icon: LuBuilding },
     ];
