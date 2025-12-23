@@ -15,7 +15,7 @@ const YearlySummary = ({ expensesByMonth, totalIncome, totalAnnualBudget, year }
 
     return (
         <div className="mt-10 bg-slate-900 p-6 rounded-2xl border border-slate-800">
-            <h3 className="text-2xl font-bold mb-6 text-slate-100 text-center tracking-tight">Yearly Financial Summary</h3>
+            <h3 className="text-2xl font-bold mb-6 text-slate-100 text-center tracking-tight">Yearly Financial Summary {year}</h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
                 {/* Visualization */}

@@ -14,9 +14,33 @@ body {
         sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply bg-slate-950 text-slate-100;
 }
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
         monospace;
+}
+
+:root {
+    --glow-color-sky: rgba(56, 189, 248, 0.5);
+    --glow-color-emerald: rgba(16, 185, 129, 0.5);
+    --glow-color-rose: rgba(244, 63, 94, 0.5);
+    --glow-color-indigo: rgba(99, 102, 241, 0.5);
+}
+
+.card-glow-sky:hover {
+    box-shadow: 0 0 20px var(--glow-color-sky);
+}
+
+.card-glow-emerald:hover {
+    box-shadow: 0 0 20px var(--glow-color-emerald);
+}
+
+.card-glow-rose:hover {
+    box-shadow: 0 0 20px var(--glow-color-rose);
+}
+
+.card-glow-indigo:hover {
+    box-shadow: 0 0 20px var(--glow-color-indigo);
 }

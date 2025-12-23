@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); // restart trigger
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
@@ -71,6 +71,7 @@ app.use('/api/opportunity', opportunityCostRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/career-paths', require('./routes/careerPathsRoutes'));
 app.use('/api/career-advisor', require('./routes/careerAdvisorRoutes'));
+app.use('/api/snapshots', require('./routes/snapshots'));
 
 // Test Routes
 app.get('/api', (req, res) => {

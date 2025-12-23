@@ -23,6 +23,13 @@ const YearlyView = ({ expensesByMonth, totalIncome, budgetItems, onSelectMonth, 
             <h2 className="text-3xl font-bold text-center mb-8 text-slate-100 tracking-tight">
                 Yearly Outlook <span className="text-slate-400">{year}</span>
             </h2>
+            <YearlySummary
+                expensesByMonth={expensesByMonth}
+                totalIncome={totalIncome}
+                totalAnnualBudget={totalAnnualBudget}
+                year={year}
+            />
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {MONTH_NAMES.map((month, index) => {
                     const totalExpenses = expensesByMonth[index] || 0;
@@ -51,12 +58,7 @@ const YearlyView = ({ expensesByMonth, totalIncome, budgetItems, onSelectMonth, 
                 })}
             </div>
 
-            <YearlySummary
-                expensesByMonth={expensesByMonth}
-                totalIncome={totalIncome}
-                totalAnnualBudget={totalAnnualBudget}
-                year={year}
-            />
+
         </div>
     );
 };
