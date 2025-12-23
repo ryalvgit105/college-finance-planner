@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import { ProfileProvider } from './context/ProfileContext';
+import { FinanceProvider } from './context/FinanceContext';
 import FuturePathPage from './pages/FuturePathPage';
 import { FuturePathProvider } from './context/FuturePathContext';
 
@@ -28,29 +29,31 @@ function App() {
     return (
         <ProfileProvider>
             <FuturePathProvider>
-                <Router>
-                    <Routes>
-                        <Route path="/" element={<Layout />}>
-                            <Route index element={<Navigate to="/dashboard" replace />} />
-                            <Route path="dashboard" element={<Dashboard />} />
-                            <Route path="assets" element={<AssetsPage />} />
-                            <Route path="debts" element={<DebtsPage />} />
-                            <Route path="income" element={<IncomePage />} />
-                            <Route path="budget-planner" element={<SpendingManager />} />
-                            <Route path="spending-analysis" element={<SpendingTrackerPage />} />
-                            <Route path="spending" element={<Navigate to="/budget-planner" replace />} />
-                            <Route path="real-estate" element={<RealEstatePage />} />
-                            <Route path="goals" element={<Goals />} />
-                            <Route path="milestones" element={<Milestones />} />
-                            <Route path="tax-benefits" element={<TaxBenefits />} />
-                            <Route path="opportunity-cost" element={<OpportunityCost />} />
-                            <Route path="investments" element={<InvestmentsPage />} />
-                            <Route path="goal-planner" element={<GoalPlanner />} />
-                            <Route path="settings" element={<Settings />} />
-                            <Route path="future-path" element={<FuturePathPage />} />
-                        </Route>
-                    </Routes>
-                </Router>
+                <FinanceProvider>
+                    <Router>
+                        <Routes>
+                            <Route path="/" element={<Layout />}>
+                                <Route index element={<Navigate to="/dashboard" replace />} />
+                                <Route path="dashboard" element={<Dashboard />} />
+                                <Route path="assets" element={<AssetsPage />} />
+                                <Route path="debts" element={<DebtsPage />} />
+                                <Route path="income" element={<IncomePage />} />
+                                <Route path="budget-planner" element={<Navigate to="/spending-analysis" replace />} />
+                                <Route path="spending-analysis" element={<SpendingTrackerPage />} />
+                                <Route path="spending" element={<Navigate to="/spending-analysis" replace />} />
+                                <Route path="real-estate" element={<RealEstatePage />} />
+                                <Route path="goals" element={<Goals />} />
+                                <Route path="milestones" element={<Milestones />} />
+                                <Route path="tax-benefits" element={<TaxBenefits />} />
+                                <Route path="opportunity-cost" element={<OpportunityCost />} />
+                                <Route path="investments" element={<InvestmentsPage />} />
+                                <Route path="goal-planner" element={<GoalPlanner />} />
+                                <Route path="settings" element={<Settings />} />
+                                <Route path="future-path" element={<FuturePathPage />} />
+                            </Route>
+                        </Routes>
+                    </Router>
+                </FinanceProvider>
             </FuturePathProvider>
         </ProfileProvider>
     );

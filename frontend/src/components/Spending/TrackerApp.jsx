@@ -4,19 +4,33 @@ import MonthlyView from './components/MonthlyView';
 import DayModal from './components/DayModal';
 import { MONTH_NAMES } from './constants';
 
-const TrackerApp = ({ expenses, incomeItems, budgetItems, onAddExpense, onDeleteExpense }) => {
-    const [currentView, setCurrentView] = useState('yearly');
-    const [currentDate, setCurrentDate] = useState(new Date('2025-01-01T00:00:00'));
+const TrackerApp = ({
+    expenses,
+    incomeItems,
+    budgetItems,
+    onAddExpense,
+    onDeleteExpense,
+    currentView,
+    setCurrentView,
+    currentDate,
+    setCurrentDate,
+    onOpenBudgetEditor
+}) => {
     const [selectedDay, setSelectedDay] = useState(null);
 
     const totalIncome = useMemo(() => incomeItems.reduce((sum, item) => sum + item.amount, 0), [incomeItems]);
 
     const budgetTotals = useMemo(() => {
-        return budgetItems.reduce((acc, item) => {
+        const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+        // Filter items: Global (no month) OR matches current month
+        const activeBudgetItems = budgetItems.filter(item => !item.month || item.month === currentMonthKey);
+
+        return activeBudgetItems.reduce((acc, item) => {
             acc[item.category] = (acc[item.category] || 0) + item.amount;
             return acc;
         }, {});
-    }, [budgetItems]);
+    }, [budgetItems, currentDate]);
 
     const handleYearChange = useCallback((direction) => {
         setCurrentDate(prevDate => {
@@ -129,6 +143,7 @@ const TrackerApp = ({ expenses, incomeItems, budgetItems, onAddExpense, onDelete
                         onSelectDay={handleSelectDay}
                         onNavigateMonth={handleNavigateMonth}
                         onBackToYearly={handleBackToYearly}
+                        onEditBudget={onOpenBudgetEditor}
                     />
                 )}
 

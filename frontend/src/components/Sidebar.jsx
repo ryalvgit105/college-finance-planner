@@ -14,7 +14,6 @@ const Sidebar = () => {
 
     const financialToolItems = [
         { name: 'FuturePath', path: '/future-path', icon: LuTrendingUp, module: null },
-        { name: 'Budget Tool', path: '/budget-planner', icon: LuBanknote },
     ];
 
     const baseProfileItems = [

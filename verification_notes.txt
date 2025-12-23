@@ -1,0 +1,26 @@
+# Verification Notes - Unified Budget & Spending
+
+## Date: 2025-12-21
+
+## Test: Verify Budget Unification and Editing
+
+### 1. Navigation & Redirects
+- **Status:** PASS
+- **Observation:** Navigating to `/budget-planner` successfully redirects to `/spending-analysis`.
+
+### 2. UI Elements
+- **Status:** PASS
+- **Observation:** "Edit Budget" button is present and opens the modal correctly.
+
+### 3. Functionality: Add Budget Item
+- **Status:** PASS
+- **Observation:** Successfully added "TestPizza" ($500) to the "Fun Money" category in January. The "Total Monthly Budget" updated correctly from $590.00 to $1090.00.
+
+### 4. Functionality: Persistence / Month-Propagation
+- **Status:** FAIL / GAP
+- **Observation:** The item added in January ("TestPizza") did NOT appear when switching to February. The budget for February remained at the default $590.00.
+- **Implication:** The current implementation treats budget edits as strictly local to the specific month being edited. There is no automatic carry-over or "apply to future months" feature. This may be unintuitive for users who expect a budget plan to be annual.
+
+### Recommendations
+- Implement a checkbox in the "Edit Budget" modal to "Apply to all future months" or "Apply to 2025".
+- Alternatively, initialize new months with the previous month's budget data.

@@ -12,6 +12,7 @@ const MonthlyView = ({
     onSelectDay,
     onNavigateMonth,
     onBackToYearly,
+    onEditBudget
 }) => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -42,7 +43,17 @@ const MonthlyView = ({
         <div className="animate-subtle-fade-in">
             <div className="bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl shadow-2xl border border-slate-800 p-4 md:p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <button onClick={onBackToYearly} className="text-sky-400 hover:text-sky-300 transition text-sm font-semibold">&larr; Back to Yearly</button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={onEditBudget}
+                            className="bg-slate-800/80 hover:bg-slate-700 text-sky-400 font-semibold py-2 px-4 rounded-lg border border-slate-700 transition flex items-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                            Edit Budget
+                        </button>
+                    </div>
                     <div className="flex items-center gap-4">
                         <button onClick={() => onNavigateMonth('prev')} className="px-3 py-1 bg-slate-800 rounded-md hover:bg-slate-700 border border-slate-700 transition">&lt;</button>
                         <h2 className="text-2xl font-bold text-center text-slate-100 w-48">
