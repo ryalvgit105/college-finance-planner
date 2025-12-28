@@ -246,6 +246,10 @@ const Assets = () => {
         }
     };
 
+    const handleNavigateYear = (direction) => {
+        setCurrentYear(direction === 'next' ? currentYear + 1 : currentYear - 1);
+    };
+
     const handleMonthClick = (monthIndex) => {
         setCurrentMonth(monthIndex);
     };
@@ -262,10 +266,23 @@ const Assets = () => {
     // Merge Live Data into History for Visualization
     // If we are in the current year, show the LIVE value for the current month
     // instead of the (likely empty) snapshot value.
+    // Merge Live Data into History for Visualization
+    // If we are in the current year, show the LIVE value for the current month
+    // instead of the (likely empty) snapshot value.
     const displayHistory = [...snapshotHistory];
     if (currentYear === REAL_YEAR) {
         displayHistory[REAL_MONTH] = currentTotalValue;
     }
+
+    // Restriction Logic
+    // Allow Next Year only if currentYear < REAL_YEAR
+    const allowNextYear = currentYear < REAL_YEAR;
+
+    // Allow Next Month only if:
+    // 1. We are in a past year (e.g., 2023) -> Always allow
+    // 2. We are in the current year AND currentMonth < REAL_MONTH -> Allow
+    // 3. If we are in the current year AND currentMonth >= REAL_MONTH -> Block
+    const allowNextMonth = currentYear < REAL_YEAR || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
 
     return (
         <TrackerLayout
@@ -275,6 +292,9 @@ const Assets = () => {
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
+            onNavigateYear={handleNavigateYear}
+            allowNextYear={allowNextYear}
+            allowNextMonth={allowNextMonth}
             onMonthClick={handleMonthClick}
             onBackToYearly={handleBackToYearly}
             totalAnnualValue={currentTotalValue} // Show current total in header

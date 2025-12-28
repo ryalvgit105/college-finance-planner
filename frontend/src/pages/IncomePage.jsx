@@ -231,6 +231,10 @@ const Income = () => {
         }
     };
 
+    const handleNavigateYear = (direction) => {
+        setCurrentYear(direction === 'next' ? currentYear + 1 : currentYear - 1);
+    };
+
     const handleMonthClick = useCallback((m) => setCurrentMonth(m), []);
     const handleBackToYearly = useCallback(() => setCurrentMonth(null), []);
 
@@ -243,6 +247,10 @@ const Income = () => {
         displayHistory[REAL_MONTH] = currentTotalValue;
     }
 
+    // Restriction Logic
+    const allowNextYear = currentYear < REAL_YEAR;
+    const allowNextMonth = currentYear < REAL_YEAR || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
+
     return (
         <TrackerLayout
             title="Income"
@@ -251,6 +259,9 @@ const Income = () => {
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
+            onNavigateYear={handleNavigateYear}
+            allowNextYear={allowNextYear}
+            allowNextMonth={allowNextMonth}
             onMonthClick={handleMonthClick}
             onBackToYearly={handleBackToYearly}
             totalAnnualValue={currentTotalValue}

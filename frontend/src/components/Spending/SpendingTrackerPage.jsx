@@ -79,7 +79,7 @@ const SpendingTrackerPage = () => {
                 </div>
                 <div className="flex-grow">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-violet-400">
-                        Spending Tracker
+                        Spending
                     </h1>
                     <p className="text-slate-400 mt-2 text-lg">Your visual guide to financial clarity.</p>
                 </div>

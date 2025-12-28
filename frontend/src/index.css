@@ -44,3 +44,27 @@ code {
 .card-glow-indigo:hover {
     box-shadow: 0 0 20px var(--glow-color-indigo);
 }
+
+.button-glow-sky:hover {
+    box-shadow: 0 0 15px var(--glow-color-sky);
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+@keyframes subtle-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-subtle-fade-in {
+    animation: subtle-fade-in 0.5s ease-out forwards;
+}

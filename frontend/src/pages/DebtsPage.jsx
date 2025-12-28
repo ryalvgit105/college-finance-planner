@@ -215,6 +215,10 @@ const Debts = () => {
         }
     };
 
+    const handleNavigateYear = (direction) => {
+        setCurrentYear(direction === 'next' ? currentYear + 1 : currentYear - 1);
+    };
+
     const handleMonthClick = (m) => setCurrentMonth(m);
     const handleBackToYearly = () => setCurrentMonth(null);
 
@@ -227,6 +231,10 @@ const Debts = () => {
         displayHistory[REAL_MONTH] = currentTotalValue;
     }
 
+    // Restriction Logic
+    const allowNextYear = currentYear < REAL_YEAR;
+    const allowNextMonth = currentYear < REAL_YEAR || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
+
     return (
         <TrackerLayout
             title="Debts"
@@ -235,6 +243,9 @@ const Debts = () => {
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
+            onNavigateYear={handleNavigateYear}
+            allowNextYear={allowNextYear}
+            allowNextMonth={allowNextMonth}
             onMonthClick={handleMonthClick}
             onBackToYearly={handleBackToYearly}
             totalAnnualValue={currentTotalValue}
