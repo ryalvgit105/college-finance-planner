@@ -18,6 +18,7 @@ import Settings from './pages/Settings';
 import AssetsPage from './pages/AssetsPage.jsx';
 import DebtsPage from './pages/DebtsPage.jsx';
 import IncomePage from './pages/IncomePage.jsx';
+import FinancialOverviewPage from './pages/FinancialOverviewPage.jsx';
 import SpendingPage from './pages/SpendingPage.jsx';
 import SpendingManager from './pages/SpendingManager.jsx';
 import SpendingAnalysisPage from './pages/spending-analysis/SpendingAnalysisPage.jsx';
@@ -38,6 +39,7 @@ function App() {
                                 <Route path="assets" element={<AssetsPage />} />
                                 <Route path="debts" element={<DebtsPage />} />
                                 <Route path="income" element={<IncomePage />} />
+                                <Route path="financial-overview" element={<FinancialOverviewPage />} />
                                 <Route path="budget-planner" element={<Navigate to="/spending-analysis" replace />} />
                                 <Route path="spending-analysis" element={<SpendingTrackerPage />} />
                                 <Route path="spending" element={<Navigate to="/spending-analysis" replace />} />

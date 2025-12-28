@@ -96,15 +96,28 @@ const Sidebar = () => {
 
                     {/* Base Profile Collapsible Section */}
                     <div className="pt-2">
-                        <button
-                            onClick={() => setIsBaseProfileOpen(!isBaseProfileOpen)}
-                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200"
+                        <div
+                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200 cursor-pointer group"
                         >
-                            <span className="font-medium flex items-center">
+                            <NavLink
+                                to="/financial-overview"
+                                className={({ isActive }) =>
+                                    `font-medium flex items-center flex-grow ${isActive ? 'text-[#C6AA76]' : ''}`
+                                }
+                            >
                                 <span className="mr-3">Current Financial Overview</span>
-                            </span>
-                            {isBaseProfileOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
-                        </button>
+                            </NavLink>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsBaseProfileOpen(!isBaseProfileOpen);
+                                }}
+                                className="p-1 hover:bg-[#3E3D3D] rounded hover:text-white transition-colors"
+                            >
+                                {isBaseProfileOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
+                            </button>
+                        </div>
 
                         {isBaseProfileOpen && (
                             <div className="ml-4 mt-1 space-y-1 border-l border-gray-600 pl-2">
