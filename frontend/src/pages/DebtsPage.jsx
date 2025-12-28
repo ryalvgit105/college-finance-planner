@@ -51,7 +51,7 @@ const Debts = () => {
         setLoading(true);
         try {
             const res = await getDebts(currentProfile._id);
-            const list = res.data || [];
+            const list = res.data?.data || [];
             // Sort by balance desc
             list.sort((a, b) => b.balance - a.balance);
             setLocalDebts(list);
@@ -103,8 +103,11 @@ const Debts = () => {
         if (!currentProfile) return;
 
         if (currentMonth === null) {
-            // Yearly View - refresh history
+            // Yearly View - refresh history AND live data for overlay
             fetchSnapshotHistory('debt', currentYear, currentProfile._id);
+            if (currentYear === REAL_YEAR) {
+                fetchLiveDebts();
+            }
         } else {
             const isPast = (currentYear < REAL_YEAR) || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
             if (isPast) {
@@ -212,22 +215,32 @@ const Debts = () => {
         }
     };
 
-    // Calculate Total
-    const totalDebt = localDebts.reduce((sum, d) => sum + (d.balance || d.value || 0), 0);
+    const handleMonthClick = (m) => setCurrentMonth(m);
+    const handleBackToYearly = () => setCurrentMonth(null);
+
+    // Calculate Totals for Display
+    const currentTotalValue = localDebts.reduce((sum, item) => sum + (Number(item.balance) || Number(item.value) || 0), 0);
+
+    // Merge Live Data into History for Visualization
+    const displayHistory = [...snapshotHistory];
+    if (currentYear === REAL_YEAR) {
+        displayHistory[REAL_MONTH] = currentTotalValue;
+    }
 
     return (
         <TrackerLayout
             title="Debts"
-            subtitle="Track your loans, credit cards, and other liabilities"
+            subtitle="Manage and track your liabilities"
             type="debt"
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
-            onMonthClick={(m) => setCurrentMonth(m)}
-            onBackToYearly={() => setCurrentMonth(null)}
-            totalAnnualValue={totalDebt}
-            monthlyHistory={snapshotHistory}
+            onMonthClick={handleMonthClick}
+            onBackToYearly={handleBackToYearly}
+            totalAnnualValue={currentTotalValue}
+            monthlyHistory={displayHistory}
         >
+            {/* MONTHLY DETAIL CONTENT */}
             <div className="space-y-6">
                 {/* Actions */}
                 {!isSnapshotView && (
@@ -240,7 +253,7 @@ const Debts = () => {
                                 onClick={handleCloseMonth}
                                 className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
                             >
-                                Close Month
+                                Save
                             </button>
                             <button
                                 onClick={() => handleOpenModal()}
@@ -271,7 +284,7 @@ const Debts = () => {
                             {isSnapshotView ? 'Historical Debts' : 'Current Debts'}
                         </h3>
                         <span className="font-bold text-red-600 text-lg">
-                            ${totalDebt.toLocaleString()}
+                            ${currentTotalValue.toLocaleString()}
                         </span>
                     </div>
 
@@ -330,15 +343,15 @@ const Debts = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                    <div className="bg-gray-800 text-white rounded-lg shadow-xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold">{editingDebt ? 'Edit Debt' : 'Add Debt'}</h3>
-                            <button onClick={handleCloseModal}><LuX /></button>
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white"><LuX /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Type</label>
-                                <select name="type" value={formData.type} onChange={handleChange} className="w-full border rounded p-2" required>
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Type</label>
+                                <select name="type" value={formData.type} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
                                     <option value="">Select...</option>
                                     <option value="Student Loan">Student Loan</option>
                                     <option value="Credit Card">Credit Card</option>
@@ -349,24 +362,24 @@ const Debts = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Balance</label>
-                                    <input type="number" name="balance" value={formData.balance} onChange={handleChange} className="w-full border rounded p-2" required />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Balance</label>
+                                    <input type="number" name="balance" value={formData.balance} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Rate (%)</label>
-                                    <input type="number" name="interestRate" value={formData.interestRate} onChange={handleChange} className="w-full border rounded p-2" step="0.01" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Rate (%)</label>
+                                    <input type="number" name="interestRate" value={formData.interestRate} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" step="0.01" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Min Payment</label>
-                                <input type="number" name="monthlyPayment" value={formData.monthlyPayment} onChange={handleChange} className="w-full border rounded p-2" />
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Min Payment</label>
+                                <input type="number" name="monthlyPayment" value={formData.monthlyPayment} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full border rounded p-2" />
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Description</label>
+                                <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-red-500 focus:border-transparent" />
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded transition-colors">Cancel</button>
                                 <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Save</button>
                             </div>
                         </form>

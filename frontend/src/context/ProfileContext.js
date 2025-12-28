@@ -21,8 +21,11 @@ export const ProfileProvider = ({ children }) => {
     const fetchProfiles = async () => {
         setIsLoading(true);
         try {
-            const data = await getProfiles(USER_ID);
-            if (data.success) {
+            const response = await getProfiles(USER_ID);
+            // Verify if response.data exists and has success property (Axios response structure)
+            const data = response.data;
+
+            if (data && data.success) {
                 setProfiles(data.data);
                 // Set default profile if none selected
                 if (data.data.length > 0 && !currentProfile) {
@@ -31,7 +34,7 @@ export const ProfileProvider = ({ children }) => {
             }
         } catch (err) {
             setError('Failed to load profiles');
-            console.error(err);
+            console.error('Error fetching profiles:', err);
         } finally {
             setIsLoading(false);
         }

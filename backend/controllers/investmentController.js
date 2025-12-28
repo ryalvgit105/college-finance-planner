@@ -6,7 +6,7 @@ const { calculateProjections } = require('../utils/longTermProjection');
 // @access  Public
 exports.getInvestments = async (req, res) => {
     try {
-        const { profileId } = req.params;
+        const { profileId } = req.query;
         const investments = await Investment.find({ profileId });
 
         // Calculate projections

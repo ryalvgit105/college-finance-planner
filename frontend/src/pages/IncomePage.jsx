@@ -10,6 +10,7 @@ import { LuPlus, LuPencil, LuTrash2, LuX, LuInfo, LuBriefcase } from 'react-icon
 import { Link } from 'react-router-dom';
 
 const Income = () => {
+    // Force re-compile
     // Contexts
     const { currentProfile } = useProfile();
     const {
@@ -51,7 +52,7 @@ const Income = () => {
         try {
             const res = await getIncome(currentProfile._id);
             // getIncome returns sorted list.
-            const list = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : []);
+            const list = Array.isArray(res.data?.data) ? res.data?.data : (res.data?.data ? [res.data?.data] : []);
             setLocalIncomes(list);
             setIsSnapshotView(false);
         } catch (err) {
@@ -100,6 +101,9 @@ const Income = () => {
 
         if (currentMonth === null) {
             fetchSnapshotHistory('income', currentYear, currentProfile._id);
+            if (currentYear === REAL_YEAR) {
+                fetchLiveIncome();
+            }
         } else {
             const isPast = (currentYear < REAL_YEAR) || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
             if (isPast) {
@@ -227,22 +231,30 @@ const Income = () => {
         }
     };
 
-    // Calculate Total for Header (Live: Sum of currentIncomes? Snapshot: Sum of values)
-    // For live income, if we have multiple entries, usually just the latest matters, but here we sum list for generic table logic.
-    const totalIncome = localIncomes.reduce((sum, item) => sum + (item.currentIncome || item.value || 0), 0);
+    const handleMonthClick = useCallback((m) => setCurrentMonth(m), []);
+    const handleBackToYearly = useCallback(() => setCurrentMonth(null), []);
+
+    // Calculate Totals for Display
+    const currentTotalValue = localIncomes.reduce((sum, item) => sum + (Number(item.currentIncome) || 0), 0);
+
+    // Merge Live Data into History for Visualization
+    const displayHistory = [...snapshotHistory];
+    if (currentYear === REAL_YEAR) {
+        displayHistory[REAL_MONTH] = currentTotalValue;
+    }
 
     return (
         <TrackerLayout
             title="Income"
-            subtitle="Track your earnings and career goals"
+            subtitle="Track your earnings and career growth"
             type="income"
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
-            onMonthClick={(m) => setCurrentMonth(m)}
-            onBackToYearly={() => setCurrentMonth(null)}
-            totalAnnualValue={totalIncome}
-            monthlyHistory={snapshotHistory}
+            onMonthClick={handleMonthClick}
+            onBackToYearly={handleBackToYearly}
+            totalAnnualValue={currentTotalValue}
+            monthlyHistory={displayHistory}
         >
             {/* Actions */}
             {!isSnapshotView && (
@@ -255,7 +267,7 @@ const Income = () => {
                             onClick={handleCloseMonth}
                             className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
                         >
-                            Close Month
+                            Save
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
@@ -283,7 +295,7 @@ const Income = () => {
                         {isSnapshotView ? 'Historical Income' : 'Income Records'}
                     </h3>
                     <span className="font-bold text-blue-600 text-lg">
-                        ${totalIncome.toLocaleString()}
+                        ${currentTotalValue.toLocaleString()}
                     </span>
                 </div>
 
@@ -347,36 +359,36 @@ const Income = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-gray-800 text-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold">{editingIncome ? 'Edit Income' : 'Add Income'}</h3>
-                            <button onClick={handleCloseModal}><LuX /></button>
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white"><LuX /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Current Annual Income ($)</label>
-                                    <input type="number" name="currentIncome" value={formData.currentIncome} onChange={handleChange} className="w-full border rounded p-2" required />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Current Annual Income ($)</label>
+                                    <input type="number" name="currentIncome" value={formData.currentIncome} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Sources (comma separated)</label>
-                                    <input type="text" name="incomeSources" value={formData.incomeSources} onChange={handleChange} className="w-full border rounded p-2" placeholder="Job, Freelance..." />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Sources (comma separated)</label>
+                                    <input type="text" name="incomeSources" value={formData.incomeSources} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Job, Freelance..." />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Projected Salary ($)</label>
-                                    <input type="number" name="projectedSalary" value={formData.projectedSalary} onChange={handleChange} className="w-full border rounded p-2" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Projected Salary ($)</label>
+                                    <input type="number" name="projectedSalary" value={formData.projectedSalary} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Career Goal</label>
-                                    <input type="text" name="careerGoal" value={formData.careerGoal} onChange={handleChange} className="w-full border rounded p-2" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Career Goal</label>
+                                    <input type="text" name="careerGoal" value={formData.careerGoal} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Notes</label>
-                                <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2" className="w-full border rounded p-2"></textarea>
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Notes</label>
+                                <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2" className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded transition-colors">Cancel</button>
                                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
                             </div>
                         </form>

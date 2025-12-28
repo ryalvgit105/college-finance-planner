@@ -10,6 +10,7 @@ import { LuPlus, LuPencil, LuTrash2, LuX, LuInfo, LuTrendingUp } from 'react-ico
 import { Link } from 'react-router-dom';
 
 const InvestmentsPage = () => {
+    // Force re-compile
     // Contexts
     const { currentProfile } = useProfile();
     const {
@@ -52,7 +53,7 @@ const InvestmentsPage = () => {
         setLoading(true);
         try {
             const res = await getInvestments(currentProfile._id);
-            setLocalInvestments(res.data || []);
+            setLocalInvestments(res.data?.data || []);
             setIsSnapshotView(false);
         } catch (err) {
             console.error('Error fetching live investments:', err);
@@ -100,6 +101,9 @@ const InvestmentsPage = () => {
 
         if (currentMonth === null) {
             fetchSnapshotHistory('investment', currentYear, currentProfile._id);
+            if (currentYear === REAL_YEAR) {
+                fetchLiveInvestments();
+            }
         } else {
             const isPast = (currentYear < REAL_YEAR) || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
             if (isPast) {
@@ -237,21 +241,30 @@ const InvestmentsPage = () => {
         }
     };
 
-    // Calculate Total
-    const totalValue = localInvestments.reduce((sum, item) => sum + (item.currentValue || item.value || 0), 0);
+    const handleMonthClick = (m) => setCurrentMonth(m);
+    const handleBackToYearly = () => setCurrentMonth(null);
+
+    // Calculate Totals for Display
+    const currentTotalValue = localInvestments.reduce((sum, item) => sum + (Number(item.currentValue) || 0), 0);
+
+    // Merge Live Data into History for Visualization
+    const displayHistory = [...snapshotHistory];
+    if (currentYear === REAL_YEAR) {
+        displayHistory[REAL_MONTH] = currentTotalValue;
+    }
 
     return (
         <TrackerLayout
             title="Investments"
-            subtitle="Manage your portfolio and track growth"
+            subtitle="Watch your portfolio grow"
             type="investment"
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
-            onMonthClick={(m) => setCurrentMonth(m)}
-            onBackToYearly={() => setCurrentMonth(null)}
-            totalAnnualValue={totalValue}
-            monthlyHistory={snapshotHistory}
+            onMonthClick={handleMonthClick}
+            onBackToYearly={handleBackToYearly}
+            totalAnnualValue={currentTotalValue}
+            monthlyHistory={displayHistory}
         >
             {/* Actions */}
             {!isSnapshotView && (
@@ -264,7 +277,7 @@ const InvestmentsPage = () => {
                             onClick={handleCloseMonth}
                             className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
                         >
-                            Close Month
+                            Save
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
@@ -294,7 +307,7 @@ const InvestmentsPage = () => {
                     <div className="text-right">
                         <div className="text-sm text-gray-500">Total Value</div>
                         <div className="text-lg font-bold text-indigo-600">
-                            ${totalValue.toLocaleString()}
+                            ${currentTotalValue.toLocaleString()}
                         </div>
                     </div>
                 </div>
@@ -358,20 +371,20 @@ const InvestmentsPage = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-gray-800 text-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold">{editingInvestment ? 'Edit Investment' : 'Add Investment'}</h3>
-                            <button onClick={handleCloseModal}><LuX /></button>
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white"><LuX /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Name</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full border rounded p-2" required />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Name</label>
+                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Type</label>
-                                    <select name="type" value={formData.type} onChange={handleChange} className="w-full border rounded p-2">
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Type</label>
+                                    <select name="type" value={formData.type} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                         <option value="Stock">Stock</option>
                                         <option value="Bond">Bond</option>
                                         <option value="ETF">ETF</option>
@@ -386,22 +399,22 @@ const InvestmentsPage = () => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Current Value ($)</label>
-                                    <input type="number" name="currentValue" value={formData.currentValue} onChange={handleChange} className="w-full border rounded p-2" required />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Current Value ($)</label>
+                                    <input type="number" name="currentValue" value={formData.currentValue} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Monthly Contribution ($)</label>
-                                    <input type="number" name="contributionPerMonth" value={formData.contributionPerMonth} onChange={handleChange} className="w-full border rounded p-2" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Monthly Contribution ($)</label>
+                                    <input type="number" name="contributionPerMonth" value={formData.contributionPerMonth} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Expected Return (%)</label>
-                                    <input type="number" name="expectedAnnualReturn" value={formData.expectedAnnualReturn} onChange={handleChange} className="w-full border rounded p-2" step="0.1" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Expected Return (%)</label>
+                                    <input type="number" name="expectedAnnualReturn" value={formData.expectedAnnualReturn} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" step="0.1" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Tax Treatment</label>
-                                    <select name="taxTreatment" value={formData.taxTreatment} onChange={handleChange} className="w-full border rounded p-2">
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Tax Treatment</label>
+                                    <select name="taxTreatment" value={formData.taxTreatment} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                         <option value="Taxable">Taxable</option>
                                         <option value="Tax-Deferred">Tax-Deferred</option>
                                         <option value="Tax-Free">Tax-Free</option>
@@ -409,7 +422,7 @@ const InvestmentsPage = () => {
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded transition-colors">Cancel</button>
                                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save</button>
                             </div>
                         </form>

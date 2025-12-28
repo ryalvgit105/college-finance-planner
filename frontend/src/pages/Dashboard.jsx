@@ -58,12 +58,12 @@ const Dashboard = () => {
                 getSpending(profileId)
             ]);
 
-            setFinancialData(summaryData.data || summaryData); // Handle potential .data wrapper variation
-            setAssetsList(assetsData.data || []);
-            setInvestmentsList(investmentsData.data || []);
-            setMilestones(milestonesData.data || []);
-            setGoals(goalsData.data || []);
-            setSpendingList(spendingData.data || []);
+            setFinancialData(summaryData.data?.data || {});
+            setAssetsList(assetsData.data?.data || []);
+            setInvestmentsList(investmentsData.data?.data || []);
+            setMilestones(milestonesData.data?.data || []);
+            setGoals(goalsData.data?.data || []);
+            setSpendingList(spendingData.data?.data || []);
         } catch (err) {
             console.error('Failed to fetch dashboard data:', err);
             setError('Failed to load financial data. Please try again later.');

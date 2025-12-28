@@ -49,8 +49,8 @@ const Assets = () => {
                 getInvestments(currentProfile._id)
             ]);
 
-            const assetsList = assetsRes.data || [];
-            const investmentsList = (investmentsRes.data || []).map(inv => ({
+            const assetsList = assetsRes.data?.data || [];
+            const investmentsList = (investmentsRes.data?.data || []).map(inv => ({
                 ...inv,
                 type: inv.assetType || inv.type,
                 value: inv.currentValue,
@@ -111,9 +111,11 @@ const Assets = () => {
         if (!currentProfile) return;
 
         if (currentMonth === null) {
-            // Yearly View - logic handled by TrackerLayout (showing history)
-            // But we might want to refresh history if we just came back
+            // Yearly View - fetch history AND live data for overlay
             fetchSnapshotHistory('asset', currentYear, currentProfile._id);
+            if (currentYear === REAL_YEAR) {
+                fetchLiveAssets();
+            }
         } else {
             // Check if we are viewing "Live" (Current Month/Year)
             // OR Future (Live, but maybe projected later. For now, Future = Live)
@@ -175,7 +177,10 @@ const Assets = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!currentProfile) return;
+        if (!currentProfile) {
+            alert('Error: No profile selected. Please create a profile first.');
+            return;
+        }
         setLoading(true);
         try {
             const assetData = {
@@ -197,6 +202,7 @@ const Assets = () => {
             } else {
                 await createAsset(assetData);
             }
+            fetchLiveAssets();
             handleCloseModal();
             fetchLiveAssets();
             setSuccess('Saved successfully!');
@@ -223,25 +229,43 @@ const Assets = () => {
     const handleNavigateMonth = (direction) => {
         if (direction === 'prev') {
             if (currentMonth === 0) {
+                // Determine if we should go back a year? For now just loop or stop
+                // Simple logic: Go to Dec of previous year
                 setCurrentMonth(11);
-                setCurrentYear(currentYear - 1);
+                setCurrentYear(prev => prev - 1);
             } else {
-                setCurrentMonth(currentMonth - 1);
+                setCurrentMonth(prev => prev - 1);
             }
         } else {
             if (currentMonth === 11) {
                 setCurrentMonth(0);
-                setCurrentYear(currentYear + 1);
+                setCurrentYear(prev => prev + 1);
             } else {
-                setCurrentMonth(currentMonth + 1);
+                setCurrentMonth(prev => prev + 1);
             }
         }
     };
 
-    // -- Render --
+    const handleMonthClick = (monthIndex) => {
+        setCurrentMonth(monthIndex);
+    };
 
-    // Calculate total for Header
-    const totalAssets = localAssets.reduce((sum, item) => sum + (item.value || 0), 0);
+    const handleBackToYearly = () => {
+        setCurrentMonth(null); // Switch to yearly view
+        // Maybe refresh history?
+        fetchSnapshotHistory('asset', currentYear, currentProfile._id);
+    };
+
+    // Calculate Totals for Display
+    const currentTotalValue = localAssets.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+
+    // Merge Live Data into History for Visualization
+    // If we are in the current year, show the LIVE value for the current month
+    // instead of the (likely empty) snapshot value.
+    const displayHistory = [...snapshotHistory];
+    if (currentYear === REAL_YEAR) {
+        displayHistory[REAL_MONTH] = currentTotalValue;
+    }
 
     return (
         <TrackerLayout
@@ -251,11 +275,10 @@ const Assets = () => {
             year={currentYear}
             month={currentMonth}
             onNavigateMonth={handleNavigateMonth}
-            onMonthClick={(m) => setCurrentMonth(m)}
-            onBackToYearly={() => setCurrentMonth(null)}
-            totalAnnualValue={totalAssets} // In yearly view, this might need to be "Net Worth" or average? 
-            // The grid shows breakdown. Total header might be current live total?
-            monthlyHistory={snapshotHistory}
+            onMonthClick={handleMonthClick}
+            onBackToYearly={handleBackToYearly}
+            totalAnnualValue={currentTotalValue} // Show current total in header
+            monthlyHistory={displayHistory}
         >
             {/* MONTHLY DETAIL CONTENT */}
             <div className="space-y-6">
@@ -277,7 +300,7 @@ const Assets = () => {
                                 onClick={handleCloseMonth}
                                 className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
                             >
-                                Close Month & Save Snapshot
+                                Save
                             </button>
                             <button
                                 onClick={() => handleOpenModal()}
@@ -316,7 +339,7 @@ const Assets = () => {
                             {isSnapshotView ? 'Historical Assets' : 'Current Assets'}
                         </h3>
                         <span className="font-bold text-green-600 text-lg">
-                            ${totalAssets.toLocaleString()}
+                            ${currentTotalValue.toLocaleString()}
                         </span>
                     </div>
 
@@ -367,15 +390,15 @@ const Assets = () => {
             {/* Modal - Only available locally in this component not TrackerLayout */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                    <div className="bg-gray-800 text-white rounded-lg shadow-xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold">{editingAsset ? 'Edit Asset' : 'Add Asset'}</h3>
-                            <button onClick={handleCloseModal}><LuX /></button>
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white"><LuX /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Type</label>
-                                <select name="type" value={formData.type} onChange={handleChange} className="w-full border rounded p-2" required>
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Type</label>
+                                <select name="type" value={formData.type} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
                                     <option value="">Select...</option>
                                     <option value="Savings Account">Savings Account</option>
                                     <option value="Checking Account">Checking Account</option>
@@ -384,15 +407,15 @@ const Assets = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Value</label>
-                                <input type="number" name="value" value={formData.value} onChange={handleChange} className="w-full border rounded p-2" required />
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Value</label>
+                                <input type="number" name="value" value={formData.value} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full border rounded p-2" />
+                                <label className="block text-sm font-medium mb-1 text-gray-300">Description</label>
+                                <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded transition-colors">Cancel</button>
                                 <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
                             </div>
                         </form>
