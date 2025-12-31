@@ -2,7 +2,24 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useFinance } from '../context/FinanceContext';
 import * as financeApi from '../api/financeApi';
-import { LuDollarSign, LuCreditCard, LuTrendingUp, LuLandmark, LuWallet, LuArrowUpRight, LuArrowDownRight } from 'react-icons/lu';
+import { LuDollarSign, LuCreditCard, LuTrendingUp, LuLandmark, LuWallet, LuArrowUpRight, LuArrowDownRight, LuActivity } from 'react-icons/lu';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
+
+const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl">
+                <p className="text-slate-200 font-medium">{payload[0].name}</p>
+                <p className="text-emerald-400 font-bold">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(payload[0].value)}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
 
 const FinancialOverviewPage = () => {
     const { currentProfile } = useProfile();
@@ -58,6 +75,19 @@ const FinancialOverviewPage = () => {
     const netWorth = (totalAssets + totalInvestments) - totalDebts;
     const monthlyCashflow = totalMonthlyIncome - totalMonthlySpending;
     const savingsRate = totalMonthlyIncome > 0 ? ((monthlyCashflow / totalMonthlyIncome) * 100).toFixed(1) : 0;
+
+    // Investment Allocation Calculation
+    const allocationData = useMemo(() => {
+        const typeMap = {};
+        investments.forEach(item => {
+            const types = item.type || item.assetType || 'Other';
+            const val = Number(item.currentValue) || 0;
+            typeMap[types] = (typeMap[types] || 0) + val;
+        });
+        return Object.entries(typeMap)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    }, [investments]);
 
     const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
@@ -173,6 +203,60 @@ const FinancialOverviewPage = () => {
                     />
                 </div>
 
+                {/* Investment Allocation Section */}
+                {totalInvestments > 0 && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+                        <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
+                            <div className="md:w-1/3">
+                                <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                                    <LuActivity className="text-indigo-400" />
+                                    Portfolio Composition
+                                </h3>
+                                <p className="text-slate-400 mb-6">
+                                    A breakdown of your investment strategy. Diversification is key to managing risk.
+                                </p>
+                                <div className="space-y-3">
+                                    {allocationData.map((entry, index) => (
+                                        <div key={entry.name} className="flex justify-between items-center text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                                <span className="text-slate-300">{entry.name}</span>
+                                            </div>
+                                            <span className="text-white font-medium">{Math.round((entry.value / totalInvestments) * 100)}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="md:w-2/3 h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={allocationData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={100}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {allocationData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend
+                                            layout="horizontal"
+                                            verticalAlign="bottom"
+                                            align="right"
+                                            wrapperStyle={{ fontSize: '12px', color: '#94a3b8' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

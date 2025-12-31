@@ -6,6 +6,8 @@ import { LuHouse, LuDollarSign, LuCreditCard, LuLandmark, LuShoppingCart, LuTrop
 const Sidebar = () => {
     const { currentProfile } = useProfile();
     const [isBaseProfileOpen, setIsBaseProfileOpen] = useState(false);
+    const [isAssetsOpen, setIsAssetsOpen] = useState(false);
+    const [isLiabilityOpen, setIsLiabilityOpen] = useState(false);
     const [isFinancialToolsOpen, setIsFinancialToolsOpen] = useState(true); // Default open
 
     const navItems = [
@@ -94,58 +96,118 @@ const Sidebar = () => {
                         )}
                     </div>
 
-                    {/* Base Profile Collapsible Section */}
+                    {/* Current Financial Overview Section */}
                     <div className="pt-2">
-                        <div
-                            className="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-[#2E2D2D] hover:text-[#D4B483] rounded-lg transition-all duration-200 cursor-pointer group"
-                        >
-                            <NavLink
-                                to="/financial-overview"
-                                className={({ isActive }) =>
-                                    `font-medium flex items-center flex-grow ${isActive ? 'text-[#C6AA76]' : ''}`
-                                }
-                            >
-                                <span className="mr-3">Current Financial Overview</span>
-                            </NavLink>
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setIsBaseProfileOpen(!isBaseProfileOpen);
-                                }}
-                                className="p-1 hover:bg-[#3E3D3D] rounded hover:text-white transition-colors"
-                            >
-                                {isBaseProfileOpen ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
-                            </button>
+                        <div className="px-4 py-3 text-[#D4B483] font-semibold text-sm uppercase tracking-wider">
+                            Current Financial Overview
                         </div>
 
-                        {isBaseProfileOpen && (
-                            <div className="ml-4 mt-1 space-y-1 border-l border-gray-600 pl-2">
-                                {baseProfileItems.map((item) => {
-                                    const Icon = item.icon;
-                                    return (
-                                        <NavLink
-                                            key={item.path}
-                                            to={item.path}
-                                            className={({ isActive }) =>
-                                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
-                                                    ? 'text-[#C6AA76] font-semibold'
-                                                    : 'text-gray-400 hover:text-[#D4B483]'
-                                                }`
-                                            }
-                                        >
-                                            <Icon size={16} />
-                                            <span>{item.name}</span>
-                                        </NavLink>
-                                    );
-                                })}
-                            </div>
-                        )}
+                        {/* 1. Income */}
+                        <NavLink
+                            to="/income"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive ? 'text-[#C6AA76] font-semibold' : 'text-gray-300 hover:text-[#D4B483]'}`
+                            }
+                        >
+                            <LuLandmark size={18} />
+                            <span>Income</span>
+                        </NavLink>
+
+                        {/* 2. Spending */}
+                        <NavLink
+                            to="/spending-analysis"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive ? 'text-[#C6AA76] font-semibold' : 'text-gray-300 hover:text-[#D4B483]'}`
+                            }
+                        >
+                            <LuBanknote size={18} />
+                            <span>Spending</span>
+                        </NavLink>
+
+                        {/* 3. Assets (Collapsible) */}
+                        <div className="mt-1">
+                            <button
+                                onClick={() => setIsAssetsOpen(!isAssetsOpen)}
+                                className="w-full flex items-center justify-between px-4 py-2 text-gray-300 hover:text-[#D4B483] rounded-lg transition-all duration-200 text-sm"
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <LuDollarSign size={18} />
+                                    <span>Assets</span>
+                                </div>
+                                {isAssetsOpen ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}
+                            </button>
+
+                            {isAssetsOpen && (
+                                <div className="ml-9 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                                    <NavLink
+                                        to="/investments"
+                                        className={({ isActive }) =>
+                                            `block px-3 py-1.5 rounded-md text-sm transition-all ${isActive ? 'text-[#C6AA76] font-medium' : 'text-gray-400 hover:text-[#D4B483]'}`
+                                        }
+                                    >
+                                        Investments
+                                    </NavLink>
+                                    <NavLink
+                                        to="/property"
+                                        className={({ isActive }) =>
+                                            `block px-3 py-1.5 rounded-md text-sm transition-all ${isActive ? 'text-[#C6AA76] font-medium' : 'text-gray-400 hover:text-[#D4B483]'}`
+                                        }
+                                    >
+                                        Property
+                                    </NavLink>
+                                    <NavLink
+                                        to="/real-estate"
+                                        className={({ isActive }) =>
+                                            `block px-3 py-1.5 rounded-md text-sm transition-all ${isActive ? 'text-[#C6AA76] font-medium' : 'text-gray-400 hover:text-[#D4B483]'}`
+                                        }
+                                    >
+                                        Real Estate
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 4. Liability (Collapsible) */}
+                        <div className="mt-1">
+                            <button
+                                onClick={() => setIsLiabilityOpen(!isLiabilityOpen)}
+                                className="w-full flex items-center justify-between px-4 py-2 text-gray-300 hover:text-[#D4B483] rounded-lg transition-all duration-200 text-sm"
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <LuCreditCard size={18} />
+                                    <span>Liability</span>
+                                </div>
+                                {isLiabilityOpen ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}
+                            </button>
+
+                            {isLiabilityOpen && (
+                                <div className="ml-9 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                                    <NavLink
+                                        to="/debts"
+                                        className={({ isActive }) =>
+                                            `block px-3 py-1.5 rounded-md text-sm transition-all ${isActive ? 'text-[#C6AA76] font-medium' : 'text-gray-400 hover:text-[#D4B483]'}`
+                                        }
+                                    >
+                                        Debts
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 5. Networth */}
+                        <NavLink
+                            to="/networth"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive ? 'text-[#C6AA76] font-semibold' : 'text-gray-300 hover:text-[#D4B483]'}`
+                            }
+                        >
+                            <LuTrophy size={18} />
+                            <span>Net Worth</span>
+                        </NavLink>
+
                     </div>
                 </nav>
             </div>
-
-
         </aside>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     createInvestment, getInvestments, updateInvestment, deleteInvestment,
     getSnapshotDetail, captureSnapshot
@@ -6,11 +6,26 @@ import {
 import { useProfile } from '../context/ProfileContext';
 import { useFinance } from '../context/FinanceContext';
 import TrackerLayout from '../components/TrackerLayout';
-import { LuPlus, LuPencil, LuTrash2, LuX, LuInfo, LuTrendingUp } from 'react-icons/lu';
-import { Link } from 'react-router-dom';
+import { LuPlus, LuPencil, LuTrash2, LuX, LuInfo, LuTrendingUp, LuActivity } from 'react-icons/lu';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
+
+const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-xl">
+                <p className="text-slate-200 font-medium">{payload[0].name}</p>
+                <p className="text-emerald-400 font-bold">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(payload[0].value)}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
 
 const InvestmentsPage = () => {
-    // Force re-compile
     // Contexts
     const { currentProfile } = useProfile();
     const {
@@ -205,6 +220,7 @@ const InvestmentsPage = () => {
             handleCloseModal();
             fetchLiveInvestments();
             setSuccess('Saved!');
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError('Failed to save.');
         } finally {
@@ -218,6 +234,7 @@ const InvestmentsPage = () => {
             await deleteInvestment(id);
             fetchLiveInvestments();
             setSuccess('Deleted.');
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError('Failed to delete.');
         }
@@ -261,6 +278,19 @@ const InvestmentsPage = () => {
     const allowNextYear = currentYear < REAL_YEAR;
     const allowNextMonth = currentYear < REAL_YEAR || (currentYear === REAL_YEAR && currentMonth < REAL_MONTH);
 
+    // -- Derived Data for Charts --
+    const allocationData = useMemo(() => {
+        const typeMap = {};
+        localInvestments.forEach(item => {
+            const types = item.type || item.assetType || 'Other';
+            const val = Number(item.currentValue) || 0;
+            typeMap[types] = (typeMap[types] || 0) + val;
+        });
+        return Object.entries(typeMap)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    }, [localInvestments]);
+
     return (
         <TrackerLayout
             title="Investments"
@@ -279,123 +309,219 @@ const InvestmentsPage = () => {
         >
             {/* Actions */}
             {!isSnapshotView && (
-                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                    <div className="text-sm text-gray-600">
+                <div className="flex justify-between items-center bg-slate-900/50 p-4 rounded-xl border border-slate-800 mb-6 backdrop-blur-sm">
+                    <div className="text-sm text-slate-400">
                         Track your portfolio performance. Close the month to save a valuation snapshot.
                     </div>
                     <div className="flex gap-2">
                         <button
                             onClick={handleCloseMonth}
-                            className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
+                            className="inline-flex items-center px-4 py-2 bg-slate-800 text-slate-200 rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-white transition-all text-sm font-medium shadow-sm"
                         >
-                            Save
+                            Save Snapshot
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
-                            className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
+                            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all text-sm font-medium"
                         >
-                            <LuPlus className="mr-1" /> Add Investment
+                            <LuPlus className="mr-2" /> Add Investment
                         </button>
                     </div>
                 </div>
             )}
 
             {isSnapshotView && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm mb-6 flex">
-                    <LuInfo className="h-5 w-5 text-yellow-400 mr-3" />
-                    <p className="text-sm text-yellow-700">Historical Snapshot View (Read-only)</p>
+                <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-r shadow-sm mb-6 flex">
+                    <LuInfo className="h-5 w-5 text-amber-500 mr-3" />
+                    <p className="text-sm text-amber-200/80">Historical Snapshot View (Read-only)</p>
                 </div>
             )}
 
-            {success && <div className="p-3 bg-green-100 text-green-700 rounded mb-4">{success}</div>}
-            {error && <div className="p-3 bg-red-100 text-red-700 rounded mb-4">{error}</div>}
+            {success && <div className="p-4 bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 rounded-lg mb-6 flex items-center animate-fade-in"><LuTrendingUp className="mr-2" />{success}</div>}
+            {error && <div className="p-4 bg-rose-900/30 border border-rose-500/30 text-rose-400 rounded-lg mb-6">{error}</div>}
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-semibold text-gray-800">
-                        {isSnapshotView ? 'Historical Portfolio' : 'Current Portfolio'}
-                    </h3>
-                    <div className="text-right">
-                        <div className="text-sm text-gray-500">Total Value</div>
-                        <div className="text-lg font-bold text-indigo-600">
-                            ${currentTotalValue.toLocaleString()}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Main Table */}
+                <div className="lg:col-span-2 bg-slate-900 rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
+                    <div className="px-6 py-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
+                                <LuTrendingUp size={20} />
+                            </div>
+                            <h3 className="font-bold text-slate-100 text-lg">
+                                {isSnapshotView ? 'Historical Portfolio' : 'Current Holdings'}
+                            </h3>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Total Value</div>
+                            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
+                                ${currentTotalValue.toLocaleString()}
+                            </div>
                         </div>
                     </div>
+
+
+
+                    {loading ? (
+                        <div className="p-12 text-center text-slate-500 animate-pulse">Loading investments...</div>
+                    ) : localInvestments.length === 0 ? (
+                        <div className="p-16 text-center text-slate-500 flex flex-col items-center">
+                            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-600">
+                                <LuTrendingUp size={32} />
+                            </div>
+                            <p>No investments found for this period.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-800/50">
+                                <thead className="bg-slate-950/30">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Value</th>
+                                        {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Contrib.</th>}
+                                        {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">APY</th>}
+                                        {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/50">
+                                    {localInvestments.map((item, idx) => (
+                                        <tr key={item._id || idx} className="hover:bg-slate-800/50 transition-colors group">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-slate-200">{item.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700 capitalize">
+                                                    {item.type || item.assetType || item.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-emerald-400">
+                                                ${(item.currentValue || item.value || 0).toLocaleString()}
+                                            </td>
+                                            {!isSnapshotView && (
+                                                <>
+                                                    <td className="px-6 py-4 text-right text-sm text-slate-400 hidden sm:table-cell">
+                                                        ${(item.contributionPerMonth || 0).toLocaleString()}
+                                                        <span className='text-xs text-slate-600 block'>/mo</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right text-sm text-slate-400 hidden sm:table-cell">
+                                                        <span className="bg-slate-800 px-2 py-1 rounded text-xs">{item.expectedAnnualReturn}%</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => handleOpenModal(item)}
+                                                            className="p-2 text-sky-400 hover:text-sky-300 hover:bg-sky-400/10 rounded-lg transition-colors mr-1"
+                                                            title="Edit"
+                                                        >
+                                                            <LuPencil size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(item._id)}
+                                                            className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <LuTrash2 size={16} />
+                                                        </button>
+                                                    </td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
 
-                {loading ? (
-                    <div className="p-8 text-center text-gray-500">Loading...</div>
-                ) : localInvestments.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500">
-                        <LuTrendingUp className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                        No investments found.
+                {/* Allocation Chart */}
+                <div className="lg:col-span-1 flex flex-col gap-6">
+                    <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-6 flex-1 min-h-[300px]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                <LuActivity size={20} />
+                            </div>
+                            <h3 className="font-bold text-slate-100 text-lg">Asset Allocation</h3>
+                        </div>
+
+                        {localInvestments.length > 0 ? (
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={allocationData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {allocationData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend
+                                            layout="horizontal"
+                                            verticalAlign="bottom"
+                                            align="center"
+                                            iconType="circle"
+                                            wrapperStyle={{ fontSize: '12px', color: '#94a3b8', paddingTop: '20px' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm">
+                                <p>Add investments to see allocation</p>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Value</th>
-                                    {!isSnapshotView && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Contrib./Mo</th>}
-                                    {!isSnapshotView && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Return</th>}
-                                    {!isSnapshotView && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>}
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {localInvestments.map((item, idx) => (
-                                    <tr key={item._id || idx} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 capitalize">
-                                                {item.type || item.assetType || item.category}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
-                                            ${(item.currentValue || item.value || 0).toLocaleString()}
-                                        </td>
-                                        {!isSnapshotView && (
-                                            <>
-                                                <td className="px-6 py-4 text-right text-sm text-gray-500">
-                                                    ${(item.contributionPerMonth || 0).toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 text-right text-sm text-gray-500">
-                                                    {item.expectedAnnualReturn}%
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button onClick={() => handleOpenModal(item)} className="text-blue-600 hover:text-blue-900 mr-3"><LuPencil /></button>
-                                                    <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-900"><LuTrash2 /></button>
-                                                </td>
-                                            </>
-                                        )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                    <div className="bg-gradient-to-br from-indigo-900/50 to-slate-900 rounded-2xl shadow-xl border border-indigo-500/20 p-6">
+                        <h4 className="text-slate-200 font-semibold mb-2">Portfolio Insight</h4>
+                        <p className="text-slate-400 text-sm">
+                            Your portfolio is currently distributed across <span className="text-white font-bold">{allocationData.length}</span> asset classes.
+                            Ensure you're diversified to minimize risk.
+                        </p>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-                    <div className="bg-gray-800 text-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold">{editingInvestment ? 'Edit Investment' : 'Add Investment'}</h3>
-                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white"><LuX /></button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-slate-900 text-slate-200 rounded-2xl shadow-2xl border border-slate-800 max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+                            <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                                {editingInvestment ? 'Edit Investment' : 'Add Investment'}
+                            </h3>
+                            <button onClick={handleCloseModal} className="text-slate-500 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-full">
+                                <LuX size={24} />
+                            </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Name</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="e.g. Apple Stock"
+                                        required
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Type</label>
-                                    <select name="type" value={formData.type} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Type</label>
+                                    <select
+                                        name="type"
+                                        value={formData.type}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                    >
                                         <option value="Stock">Stock</option>
                                         <option value="Bond">Bond</option>
                                         <option value="ETF">ETF</option>
@@ -408,33 +534,71 @@ const InvestmentsPage = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Current Value ($)</label>
-                                    <input type="number" name="currentValue" value={formData.currentValue} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required />
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Current Value ($)</label>
+                                    <input
+                                        type="number"
+                                        name="currentValue"
+                                        value={formData.currentValue}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="0.00"
+                                        required
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Monthly Contribution ($)</label>
-                                    <input type="number" name="contributionPerMonth" value={formData.contributionPerMonth} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Monthly Contribution ($)</label>
+                                    <input
+                                        type="number"
+                                        name="contributionPerMonth"
+                                        value={formData.contributionPerMonth}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="0.00"
+                                    />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Expected Return (%)</label>
-                                    <input type="number" name="expectedAnnualReturn" value={formData.expectedAnnualReturn} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" step="0.1" />
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Expected Return (%)</label>
+                                    <input
+                                        type="number"
+                                        name="expectedAnnualReturn"
+                                        value={formData.expectedAnnualReturn}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                        step="0.1"
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Tax Treatment</label>
-                                    <select name="taxTreatment" value={formData.taxTreatment} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Tax Treatment</label>
+                                    <select
+                                        name="taxTreatment"
+                                        value={formData.taxTreatment}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                    >
                                         <option value="Taxable">Taxable</option>
                                         <option value="Tax-Deferred">Tax-Deferred</option>
                                         <option value="Tax-Free">Tax-Free</option>
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded transition-colors">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Save</button>
+                            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="px-5 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-lg hover:from-indigo-500 hover:to-indigo-400 shadow-lg shadow-indigo-500/25 transition-all font-medium"
+                                >
+                                    Save Investment
+                                </button>
                             </div>
                         </form>
                     </div>

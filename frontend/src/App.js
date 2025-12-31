@@ -25,6 +25,8 @@ import SpendingAnalysisPage from './pages/spending-analysis/SpendingAnalysisPage
 import SpendingTrackerPage from './components/Spending/SpendingTrackerPage.jsx';
 import InvestmentsPage from './pages/InvestmentsPage.jsx';
 import RealEstatePage from './pages/RealEstatePage.jsx';
+import PropertyPage from './pages/PropertyPage.jsx';
+import NetWorthPage from './pages/NetWorthPage.jsx';
 
 function App() {
     return (
@@ -44,6 +46,8 @@ function App() {
                                 <Route path="spending-analysis" element={<SpendingTrackerPage />} />
                                 <Route path="spending" element={<Navigate to="/spending-analysis" replace />} />
                                 <Route path="real-estate" element={<RealEstatePage />} />
+                                <Route path="property" element={<PropertyPage />} />
+                                <Route path="networth" element={<NetWorthPage />} />
                                 <Route path="goals" element={<Goals />} />
                                 <Route path="milestones" element={<Milestones />} />
                                 <Route path="tax-benefits" element={<TaxBenefits />} />
