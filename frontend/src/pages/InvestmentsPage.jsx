@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload }) => {
 
 const InvestmentsPage = () => {
     // Contexts
-    const { currentProfile } = useProfile();
+    const { currentProfile, updateProfile } = useProfile();
     const {
         snapshotHistory,
         fetchSnapshotHistory,
@@ -46,10 +46,13 @@ const InvestmentsPage = () => {
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAccountManagerOpen, setIsAccountManagerOpen] = useState(false);
+    const [newAccount, setNewAccount] = useState('');
     const [editingInvestment, setEditingInvestment] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         type: 'Stock',
+        accounts: [],
         currentValue: '',
         contributionPerMonth: '',
         expectedAnnualReturn: '7.0',
@@ -131,6 +134,44 @@ const InvestmentsPage = () => {
 
     // -- Handlers --
 
+    // Manage Accounts Handlers
+    const handleAddAccount = async () => {
+        if (!newAccount.trim() || !currentProfile) return;
+
+        // Clean and deduplicate existing accounts
+        const currentAccounts = [...new Set(currentProfile.investmentAccounts || [])];
+        const accountToAdd = newAccount.trim();
+
+        if (currentAccounts.includes(accountToAdd)) return;
+
+        const updatedAccounts = [...currentAccounts, accountToAdd];
+        const res = await updateProfile(currentProfile._id, { investmentAccounts: updatedAccounts });
+
+        if (res.success) {
+            setNewAccount('');
+            setSuccess('Account added.');
+            setTimeout(() => setSuccess(null), 2000);
+        } else {
+            setError('Failed to add account.');
+        }
+    };
+
+    const handleDeleteAccount = async (accountToDelete) => {
+        if (!currentProfile) return;
+
+        // Clean and deduplicate existing accounts before filtering
+        const currentAccounts = [...new Set(currentProfile.investmentAccounts || [])];
+        const updatedAccounts = currentAccounts.filter(s => s !== accountToDelete);
+
+        const res = await updateProfile(currentProfile._id, { investmentAccounts: updatedAccounts });
+        if (res.success) {
+            setSuccess('Account removed.');
+            setTimeout(() => setSuccess(null), 2000);
+        } else {
+            setError('Failed to remove account.');
+        }
+    };
+
     const handleCloseMonth = async () => {
         if (!currentProfile) return;
         if (!window.confirm('Save snapshot of current investments?')) return;
@@ -156,6 +197,7 @@ const InvestmentsPage = () => {
             setFormData({
                 name: investment.name || '',
                 type: investment.type || investment.assetType || 'Stock',
+                accounts: investment.accounts || [investment.account].filter(Boolean) || [],
                 currentValue: investment.currentValue || '',
                 contributionPerMonth: investment.contributionPerMonth || '',
                 expectedAnnualReturn: investment.expectedAnnualReturn || '7.0',
@@ -168,6 +210,7 @@ const InvestmentsPage = () => {
             setFormData({
                 name: '',
                 type: 'Stock',
+                accounts: [],
                 currentValue: '',
                 contributionPerMonth: '',
                 expectedAnnualReturn: '7.0',
@@ -203,6 +246,7 @@ const InvestmentsPage = () => {
             const investmentData = {
                 profileId: currentProfile._id,
                 name: formData.name.trim(),
+                accounts: formData.accounts,
                 assetType: formData.type, // Assuming FE select matches BE expectations or we map it
                 currentValue: parseFloat(formData.currentValue) || 0,
                 contributionPerMonth: parseFloat(formData.contributionPerMonth) || 0,
@@ -321,6 +365,12 @@ const InvestmentsPage = () => {
                             Save Snapshot
                         </button>
                         <button
+                            onClick={() => setIsAccountManagerOpen(true)}
+                            className="inline-flex items-center px-4 py-2 bg-indigo-900/50 text-indigo-200 border border-indigo-500/30 rounded-lg hover:bg-indigo-900/80 transition-all text-sm font-medium shadow-sm"
+                        >
+                            Manage Accounts
+                        </button>
+                        <button
                             onClick={() => handleOpenModal()}
                             className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all text-sm font-medium"
                         >
@@ -377,11 +427,12 @@ const InvestmentsPage = () => {
                                 <thead className="bg-slate-950/30">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Accounts</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Value</th>
                                         {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Contrib.</th>}
                                         {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">APY</th>}
-                                        {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>}
+                                        {!isSnapshotView && <th className="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider sticky right-0 bg-slate-900 shadow-xl z-10">Actions</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800/50">
@@ -389,6 +440,14 @@ const InvestmentsPage = () => {
                                         <tr key={item._id || idx} className="hover:bg-slate-800/50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-slate-200">{item.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-slate-400">
+                                                    {item.accounts?.length > 0
+                                                        ? item.accounts.join(', ')
+                                                        : (item.account || '-')
+                                                    }
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700 capitalize">
@@ -407,7 +466,7 @@ const InvestmentsPage = () => {
                                                     <td className="px-6 py-4 text-right text-sm text-slate-400 hidden sm:table-cell">
                                                         <span className="bg-slate-800 px-2 py-1 rounded text-xs">{item.expectedAnnualReturn}%</span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-slate-900 shadow-xl z-10 border-l border-slate-800">
                                                         <button
                                                             onClick={() => handleOpenModal(item)}
                                                             className="p-2 text-sky-400 hover:text-sky-300 hover:bg-sky-400/10 rounded-lg transition-colors mr-1"
@@ -515,6 +574,39 @@ const InvestmentsPage = () => {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Accounts</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {currentProfile?.investmentAccounts?.length > 0 ? (
+                                            [...new Set(currentProfile.investmentAccounts)].map(acct => {
+                                                const isSelected = formData.accounts.includes(acct);
+                                                return (
+                                                    <button
+                                                        key={acct}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => {
+                                                                const newAccounts = isSelected
+                                                                    ? prev.accounts.filter(a => a !== acct)
+                                                                    : [...prev.accounts, acct];
+                                                                return { ...prev, accounts: newAccounts };
+                                                            });
+                                                        }}
+                                                        className={`px-3 py-1.5 text-xs rounded-full border transition-all ${isSelected
+                                                            ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                                                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600 hover:text-slate-300'
+                                                            }`}
+                                                    >
+                                                        {isSelected && <span className="mr-1">✓</span>}
+                                                        {acct}
+                                                    </button>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-sm text-slate-500 italic">No saved accounts. Add some in "Manage Accounts".</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
                                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Type</label>
                                     <select
                                         name="type"
@@ -601,6 +693,60 @@ const InvestmentsPage = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Manage Accounts Modal */}
+            {isAccountManagerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-slate-900 text-slate-200 rounded-2xl shadow-2xl border border-slate-800 max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-white">Manage Accounts</h3>
+                            <button onClick={() => setIsAccountManagerOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                                <LuX size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Add New Account</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newAccount}
+                                        onChange={(e) => setNewAccount(e.target.value)}
+                                        className="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        placeholder="e.g. Robinhood"
+                                    />
+                                    <button
+                                        onClick={handleAddAccount}
+                                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 font-medium transition-colors"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-semibold text-slate-400 mb-3 border-b border-slate-800 pb-2">Saved Accounts</h4>
+                                <div className="space-y-2 max-h-60 overflow-y-auto">
+                                    {currentProfile?.investmentAccounts?.length === 0 && (
+                                        <p className="text-slate-600 text-sm italic">No saved accounts yet.</p>
+                                    )}
+                                    {[...new Set(currentProfile?.investmentAccounts || [])].map(acct => (
+                                        <div key={acct} className="flex justify-between items-center bg-slate-800 p-3 rounded-lg border border-slate-700 group hover:border-slate-600 transition-all">
+                                            <span className="text-slate-300 font-medium">{acct}</span>
+                                            <button
+                                                onClick={() => handleDeleteAccount(acct)}
+                                                className="text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <LuTrash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -49,12 +49,14 @@ export const ProfileProvider = ({ children }) => {
 
     const addProfile = async (profileData) => {
         try {
-            const data = await apiCreateProfile({ ...profileData, userId: USER_ID });
-            if (data.success) {
+            const response = await apiCreateProfile({ ...profileData, userId: USER_ID });
+            const data = response.data;
+            if (data && data.success) {
                 setProfiles([...profiles, data.data]);
                 setCurrentProfile(data.data); // Switch to new profile
-                return { success: true };
+                return { success: true, data: data.data };
             }
+            return { success: false, error: data?.message || 'Failed to create profile' };
         } catch (err) {
             console.error(err);
             return { success: false, error: err.message };
@@ -63,8 +65,10 @@ export const ProfileProvider = ({ children }) => {
 
     const updateProfile = async (profileId, updates) => {
         try {
-            const data = await apiUpdateProfile(profileId, updates);
-            if (data.success) {
+            const response = await apiUpdateProfile(profileId, updates);
+            const data = response.data;
+
+            if (data && data.success) {
                 const updatedProfile = data.data;
 
                 // Update profiles list
@@ -75,8 +79,9 @@ export const ProfileProvider = ({ children }) => {
                     setCurrentProfile(updatedProfile);
                 }
 
-                return { success: true };
+                return { success: true, data: updatedProfile };
             }
+            return { success: false, error: data?.message || 'Failed to update profile' };
         } catch (err) {
             console.error(err);
             return { success: false, error: err.message };

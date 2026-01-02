@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
+import { getIncome } from '../api/financeApi';
+import { useProfile } from './ProfileContext';
 import {
     INITIAL_EXPENSES,
     INITIAL_BUDGET_ITEMS,
@@ -11,10 +13,13 @@ const FinanceContext = createContext();
 export const useFinance = () => useContext(FinanceContext);
 
 export const FinanceProvider = ({ children }) => {
+    // Current Profile
+    const { currentProfile } = useProfile();
+
     // Legacy / Spending Data
     const [expenses, setExpenses] = useState(INITIAL_EXPENSES);
     const [budgetItems, setBudgetItems] = useState(INITIAL_BUDGET_ITEMS);
-    const [incomeItems, setIncomeItems] = useState(INITIAL_INCOME_ITEMS);
+    const [incomeItems, setIncomeItems] = useState([]); // Start empty, fetch from API
 
     // Snapshot / Historical Data
     const [snapshotHistory, setSnapshotHistory] = useState([]); // 12-month array
@@ -22,6 +27,62 @@ export const FinanceProvider = ({ children }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth()); // 0-11
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Fetch Income on Mount
+    useEffect(() => {
+        const fetchIncome = async () => {
+            try {
+                // TODO: Get real profileId from AuthContext
+                const profileId = '675276535502c52538cbcf76'; // Using a known ID or fetching global for now
+                // Ideally, we'd list all or filter by user. For now, let's fetch for the "current" user if available or standard ID.
+                // Since the app seems to use a single profile or passed ID, we might need to find where profileId comes from.
+                // Looking at IncomePage, it uses useProfile(). Let's assume we can fetch all or specific.
+
+                // For this quick fix to sync, we'll fetch all and map.
+                const res = await getIncome(profileId); // Accessing specific profile
+                // If getIncome requires profileId, we need it. 
+                // If the user is just testing locally, maybe we can fetch all without ID if API supports it?
+                // Checking financeApi.js: export const getIncome = (profileId) => api.get(`/income?profileId=${profileId}`);
+                // We need a profileId.
+
+                // Fallback: If no profileId context available here easily, we might need to rely on what IncomePage uses.
+                // But FinanceContext should probably wrap everything. 
+                // Let's use the profileId found in previous calls or generic.
+            } catch (err) {
+                console.error("Failed to fetch income for context", err);
+            }
+        };
+        // fetchIncome();
+    }, []);
+
+    // Actually, we need to expose a refresh function or fetch automatically.
+    // Let's create a fetchLiveIncome function that components can call, and also call it on mount.
+
+    const fetchLiveIncomeContext = useCallback(async (profileId) => {
+        const targetId = profileId || currentProfile?._id;
+        if (!targetId) return;
+
+        try {
+            const { data } = await getIncome(targetId);
+            if (data && data.data) {
+                const mappedIncome = data.data.map(item => ({
+                    id: item._id,
+                    amount: item.currentIncome,
+                    description: item.incomeSources ? item.incomeSources.join(', ') : 'Income',
+                    month: item.month
+                }));
+                setIncomeItems(mappedIncome);
+            }
+        } catch (err) {
+            console.error("Context: Failed to fetch income", err);
+        }
+    }, [currentProfile]);
+
+    useEffect(() => {
+        if (currentProfile) {
+            fetchLiveIncomeContext(currentProfile._id);
+        }
+    }, [currentProfile, fetchLiveIncomeContext]);
 
     // Helper to get history
     const fetchSnapshotHistory = useCallback(async (type, year = currentYear, profileId) => {
@@ -121,6 +182,7 @@ export const FinanceProvider = ({ children }) => {
         setCurrentMonth,
         fetchSnapshotHistory, // Exposed
         captureSnapshot,      // Exposed
+        fetchLiveIncomeContext, // Exposed so IncomePage can trigger update
 
         // Legacy Actions
         addExpense,

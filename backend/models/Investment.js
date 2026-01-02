@@ -11,6 +11,10 @@ const InvestmentSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    accounts: {
+        type: [String],
+        default: []
+    },
     assetType: {
         type: String,
         enum: ['stock', 'etf', 'crypto', 'savings', 'brokerage', 'other', 'bond', 'mutual fund', 'real estate', '401k', 'ira'],

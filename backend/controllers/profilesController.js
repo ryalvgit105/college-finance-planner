@@ -108,6 +108,14 @@ exports.updateProfile = async (req, res) => {
             };
         }
         if (categories) profile.categories = categories;
+        if (req.body.incomeSources) {
+            // Deduplicate sources
+            profile.incomeSources = [...new Set(req.body.incomeSources)];
+        }
+        if (req.body.investmentAccounts) {
+            // Deduplicate accounts
+            profile.investmentAccounts = [...new Set(req.body.investmentAccounts)];
+        }
         if (req.body.budgets) {
             profile.budgets = req.body.budgets;
         }

@@ -22,7 +22,7 @@ const SpendingTrackerPage = () => {
 
     // Lifted state from TrackerApp
     const [currentView, setCurrentView] = useState('yearly');
-    const [currentDate, setCurrentDate] = useState(new Date('2025-01-01T00:00:00'));
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     // Derived key for the current month
     const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -79,7 +79,7 @@ const SpendingTrackerPage = () => {
                 </div>
                 <div className="flex-grow">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-violet-400">
-                        Spending
+                        Expenses
                     </h1>
                     <p className="text-slate-400 mt-2 text-lg">Your visual guide to financial clarity.</p>
                 </div>
@@ -113,6 +113,7 @@ const SpendingTrackerPage = () => {
                 <BudgetEditorModal
                     // Only pass items relevant to this month (or globals) for the Editor
                     budgetItems={currentMonthBudgetItems}
+                    incomeItems={incomeItems}
                     onAddBudgetItem={(newItem) => addBudgetItem({ ...newItem, month: currentMonthKey })}
                     onDeleteBudgetItem={deleteBudgetItem}
                     onClose={() => setIsBudgetEditorOpen(false)}

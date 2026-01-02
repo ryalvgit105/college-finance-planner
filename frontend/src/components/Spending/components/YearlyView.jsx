@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { MONTH_NAMES } from '../constants';
-import YearlySummary from './YearlySummary';
 
 const YearlyView = ({ expensesByMonth, totalIncome, budgetItems, onSelectMonth, year }) => {
 
@@ -20,15 +19,7 @@ const YearlyView = ({ expensesByMonth, totalIncome, budgetItems, onSelectMonth, 
 
     return (
         <div className="bg-gradient-to-b from-slate-900 to-slate-900/80 rounded-2xl p-6 border border-slate-800 shadow-2xl animate-subtle-fade-in">
-            <h2 className="text-3xl font-bold text-center mb-8 text-slate-100 tracking-tight">
-                Yearly Outlook <span className="text-slate-400">{year}</span>
-            </h2>
-            <YearlySummary
-                expensesByMonth={expensesByMonth}
-                totalIncome={totalIncome}
-                totalAnnualBudget={totalAnnualBudget}
-                year={year}
-            />
+            {/* Yearly Outlook header and summary removed */}
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {MONTH_NAMES.map((month, index) => {

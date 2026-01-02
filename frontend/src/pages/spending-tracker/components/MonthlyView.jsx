@@ -119,8 +119,8 @@ const MonthlyView = ({
                     <button
                         onClick={toggleBudgetEditing}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 border ${isBudgetEditing
-                                ? 'bg-emerald-600/90 hover:bg-emerald-600 border-emerald-500 text-white card-glow-emerald'
-                                : 'bg-sky-600/90 hover:bg-sky-600 border-sky-500 text-white button-glow-sky'
+                            ? 'bg-emerald-600/90 hover:bg-emerald-600 border-emerald-500 text-white card-glow-emerald'
+                            : 'bg-sky-600/90 hover:bg-sky-600 border-sky-500 text-white button-glow-sky'
                             }`}
                     >
                         <span>{isBudgetEditing ? 'Set Budget' : 'Edit Budget'}</span>
@@ -158,6 +158,7 @@ const MonthlyView = ({
             <BudgetVisualization
                 budgetTotals={budgetTotals}
                 spentTotals={spentTotals}
+                totalIncome={totalIncome}
             />
 
             <div className="flex flex-col lg:flex-row gap-6">

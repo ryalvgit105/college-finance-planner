@@ -91,6 +91,11 @@ const Debts = () => {
 
     // -- Effects --
 
+    // Reset to current year on mount
+    useEffect(() => {
+        setCurrentYear(new Date().getFullYear());
+    }, [setCurrentYear]);
+
     // 1. Load History
     useEffect(() => {
         if (currentProfile) {

@@ -24,12 +24,17 @@ const ProgressBar = ({ value, max, colorClass }) => {
 };
 
 
-const BudgetVisualization = ({ budgetTotals, spentTotals }) => {
+const BudgetVisualization = ({ budgetTotals, spentTotals, totalIncome }) => {
     return (
         <div className="bg-slate-900/50 rounded-2xl p-6 shadow-lg border border-slate-800 backdrop-blur-sm mb-8">
             <h2 className="text-2xl font-bold text-center mb-6 text-slate-100 tracking-tight">
                 Spending vs. Budget
             </h2>
+
+            <div className="mb-6 px-4 py-3 bg-emerald-900/20 rounded-xl border border-emerald-800/50 flex justify-between items-center">
+                <span className="font-bold text-emerald-100">Total Income</span>
+                <span className="font-bold text-emerald-400 text-lg">${(totalIncome || 0).toFixed(2)}</span>
+            </div>
             <div className="space-y-5">
                 {Object.keys(BUDGET_CATEGORIES).map(catStr => {
                     const category = catStr;

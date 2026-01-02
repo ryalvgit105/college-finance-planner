@@ -34,6 +34,10 @@ const TrackerApp = ({
 
     const handleYearChange = useCallback((direction) => {
         setCurrentDate(prevDate => {
+            const currentRealYear = new Date().getFullYear();
+            if (direction === 'next' && prevDate.getFullYear() >= currentRealYear) {
+                return prevDate;
+            }
             const newYear = direction === 'next' ? prevDate.getFullYear() + 1 : prevDate.getFullYear() - 1;
             return new Date(newYear, prevDate.getMonth(), 1);
         });
@@ -114,7 +118,11 @@ const TrackerApp = ({
                     <h2 className="text-3xl font-bold text-slate-100 w-32 text-center tabular-nums">{currentDate.getFullYear()}</h2>
                     <button
                         onClick={() => handleYearChange('next')}
-                        className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 border border-slate-700 transition-all text-xl font-bold button-glow-sky"
+                        disabled={currentDate.getFullYear() >= new Date().getFullYear()}
+                        className={`px-4 py-2 bg-slate-800 rounded-lg border border-slate-700 transition-all text-xl font-bold ${currentDate.getFullYear() >= new Date().getFullYear()
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:bg-slate-700 button-glow-sky'
+                            }`}
                         aria-label="Next year"
                     >
                         &gt;

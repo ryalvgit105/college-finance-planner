@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MONTH_NAMES, DAY_NAMES } from '../constants';
+import { MONTH_NAMES, DAY_NAMES, BUDGET_CATEGORIES } from '../constants';
 import BudgetVisualization from './BudgetVisualization';
 import SpendingSummary from './SpendingSummary';
 
@@ -33,7 +33,7 @@ const MonthlyView = ({
             const dailyExpenses = expenses.filter(e => e.date === dateString);
             const total = dailyExpenses.reduce((sum, e) => sum + e.amount, 0);
             totalMonthlySpending += total;
-            days.push({ date, total });
+            days.push({ date, total, expenses: dailyExpenses });
         }
 
         return { calendarDays: days, totalSpent: totalMonthlySpending };
@@ -75,21 +75,42 @@ const MonthlyView = ({
                             {calendarDays.map((day, index) => (
                                 <div
                                     key={index}
-                                    className={`h-28 md:h-32 rounded-lg transition-all duration-200 ${day.date ? 'bg-slate-900/70 border border-slate-800 cursor-pointer hover:bg-slate-800/80 hover:border-sky-500/60' : 'bg-slate-900/30'
+                                    className={`h-28 md:h-32 rounded-lg transition-all duration-200 overflow-hidden flex flex-col ${day.date ? 'bg-slate-900/70 border border-slate-800 cursor-pointer hover:bg-slate-800/80 hover:border-sky-500/60' : 'bg-slate-900/30'
                                         }`}
                                     onClick={() => day.date && onSelectDay(day.date)}
                                 >
                                     {day.date && (
-                                        <div className="p-2 flex flex-col h-full">
-                                            <span className="font-bold text-slate-400 self-start">{day.date.getDate()}</span>
-                                            <div className="flex-grow flex items-end justify-center">
+                                        <>
+                                            <div className="p-1 px-2 flex justify-between items-start bg-slate-900/20">
+                                                <span className="font-bold text-slate-500 text-sm">{day.date.getDate()}</span>
                                                 {day.total > 0 && (
-                                                    <span className={`pb-1 text-sm font-bold tabular-nums ${day.total > 100 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                                                        ${day.total.toFixed(2)}
-                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-600">${day.total.toFixed(0)}</span>
                                                 )}
                                             </div>
-                                        </div>
+
+                                            <div className="flex-grow p-1 overflow-y-auto custom-scrollbar space-y-1">
+                                                {day.expenses && day.expenses.map((expense, idx) => {
+                                                    const categoryInfo = BUDGET_CATEGORIES[expense.category] || {};
+                                                    const isOverBudget = (spentTotals[expense.category] || 0) > (budgetTotals[expense.category] || 0);
+
+                                                    // Use red if over budget, otherwise use category color
+                                                    const colorClass = isOverBudget
+                                                        ? 'text-rose-400'
+                                                        : (categoryInfo.chip ? categoryInfo.chip.split(' ')[0] : 'text-slate-400');
+
+                                                    return (
+                                                        <div key={idx} className="flex justify-between items-center text-[10px] leading-tight group">
+                                                            <span className={`font-medium truncate mr-1 max-w-[65px] group-hover:max-w-none transition-all ${colorClass}`}>
+                                                                {expense.category}
+                                                            </span>
+                                                            <span className={`font-bold tabular-nums flex-shrink-0 ${colorClass}`}>
+                                                                ${expense.amount.toFixed(0)}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             ))}
@@ -98,10 +119,11 @@ const MonthlyView = ({
 
                     {/* Budget Visualization Sidebar */}
                     <div className="lg:w-80 flex-shrink-0">
-                        <p className="text-center text-slate-400 mb-4 text-sm font-semibold tracking-wider">📊 BUDGET VS. SPENDING</p>
+                        <p className="text-center text-slate-400 mb-4 text-sm font-semibold tracking-wider">📊 BUDGET VS. EXPENSES</p>
                         <BudgetVisualization
                             budgetTotals={budgetTotals}
                             spentTotals={spentTotals}
+                            totalIncome={totalIncome}
                         />
                     </div>
                 </div>

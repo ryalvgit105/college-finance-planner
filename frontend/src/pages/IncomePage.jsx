@@ -12,14 +12,15 @@ import { Link } from 'react-router-dom';
 const Income = () => {
     // Force re-compile
     // Contexts
-    const { currentProfile } = useProfile();
+    const { currentProfile, updateProfile } = useProfile();
     const {
         snapshotHistory,
         fetchSnapshotHistory,
         currentMonth,
         setCurrentMonth,
         currentYear,
-        setCurrentYear
+        setCurrentYear,
+        fetchLiveIncomeContext
     } = useFinance();
 
     // Local State
@@ -31,12 +32,12 @@ const Income = () => {
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSourceManagerOpen, setIsSourceManagerOpen] = useState(false);
+    const [newSource, setNewSource] = useState('');
     const [editingIncome, setEditingIncome] = useState(null);
     const [formData, setFormData] = useState({
         currentIncome: '',
         incomeSources: '',
-        careerGoal: '',
-        projectedSalary: '',
         educationRequired: '',
         notes: ''
     });
@@ -54,6 +55,10 @@ const Income = () => {
             // getIncome returns sorted list.
             const list = Array.isArray(res.data?.data) ? res.data?.data : (res.data?.data ? [res.data?.data] : []);
             setLocalIncomes(list);
+            // Sync global context for other pages
+            if (currentProfile?._id) {
+                fetchLiveIncomeContext(currentProfile._id);
+            }
             setIsSnapshotView(false);
         } catch (err) {
             console.error('Error fetching live income:', err);
@@ -90,6 +95,11 @@ const Income = () => {
 
     // -- Effects --
 
+    // Reset to current year on mount
+    useEffect(() => {
+        setCurrentYear(new Date().getFullYear());
+    }, [setCurrentYear]);
+
     useEffect(() => {
         if (currentProfile) {
             fetchSnapshotHistory('income', currentYear, currentProfile._id);
@@ -117,6 +127,44 @@ const Income = () => {
 
     // -- Handlers --
 
+    // Manage Sources Handlers
+    const handleAddSource = async () => {
+        if (!newSource.trim() || !currentProfile) return;
+
+        // Clean and deduplicate existing sources
+        const currentSources = [...new Set(currentProfile.incomeSources || [])];
+        const sourceToAdd = newSource.trim();
+
+        if (currentSources.includes(sourceToAdd)) return;
+
+        const updatedSources = [...currentSources, sourceToAdd];
+        const res = await updateProfile(currentProfile._id, { incomeSources: updatedSources });
+
+        if (res.success) {
+            setNewSource('');
+            setSuccess('Source added.');
+            setTimeout(() => setSuccess(null), 2000);
+        } else {
+            setError('Failed to add source.');
+        }
+    };
+
+    const handleDeleteSource = async (sourceToDelete) => {
+        if (!currentProfile) return;
+
+        // Clean and deduplicate existing sources before filtering
+        const currentSources = [...new Set(currentProfile.incomeSources || [])];
+        const updatedSources = currentSources.filter(s => s !== sourceToDelete);
+
+        const res = await updateProfile(currentProfile._id, { incomeSources: updatedSources });
+        if (res.success) {
+            setSuccess('Source removed.');
+            setTimeout(() => setSuccess(null), 2000);
+        } else {
+            setError('Failed to remove source.');
+        }
+    };
+
     const handleCloseMonth = async () => {
         if (!currentProfile) return;
         if (!window.confirm('Save snapshot of current income setup?')) return;
@@ -143,8 +191,6 @@ const Income = () => {
             setFormData({
                 currentIncome: income.currentIncome || '',
                 incomeSources: income.incomeSources ? income.incomeSources.join(', ') : '',
-                careerGoal: income.careerGoal || '',
-                projectedSalary: income.projectedSalary || '',
                 educationRequired: income.educationRequired || '',
                 notes: income.notes || ''
             });
@@ -153,8 +199,6 @@ const Income = () => {
             setFormData({
                 currentIncome: '',
                 incomeSources: '',
-                careerGoal: '',
-                projectedSalary: '',
                 educationRequired: '',
                 notes: ''
             });
@@ -181,8 +225,6 @@ const Income = () => {
                 profileId: currentProfile._id,
                 currentIncome: parseFloat(formData.currentIncome),
                 incomeSources: formData.incomeSources.split(',').map(s => s.trim()).filter(s => s),
-                careerGoal: formData.careerGoal.trim(),
-                projectedSalary: formData.projectedSalary ? parseFloat(formData.projectedSalary) : 0,
                 educationRequired: formData.educationRequired.trim(),
                 notes: formData.notes.trim()
             };
@@ -194,6 +236,7 @@ const Income = () => {
             }
             handleCloseModal();
             fetchLiveIncome();
+            fetchLiveIncomeContext(currentProfile._id);
             setSuccess('Saved!');
         } catch (err) {
             setError('Failed to save.');
@@ -203,12 +246,18 @@ const Income = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Delete this record?')) return;
+        console.log('Attempting to delete income with ID:', id);
+        // Temporarily removing confirm to debug user issue
+        // if (!window.confirm('Delete this record?')) return;
+
         try {
             await deleteIncome(id);
+            console.log('Delete successful for ID:', id);
             fetchLiveIncome();
+            fetchLiveIncomeContext(currentProfile._id);
             setSuccess('Deleted.');
         } catch (err) {
+            console.error('Delete failed:', err);
             setError('Failed to delete.');
         }
     };
@@ -269,8 +318,8 @@ const Income = () => {
         >
             {/* Actions */}
             {!isSnapshotView && (
-                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                    <div className="text-sm text-gray-600">
+                <div className="flex justify-between items-center bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-6">
+                    <div className="text-sm text-slate-400">
                         Manage your income records. Only the latest record is typically used for snapshots.
                     </div>
                     <div className="flex gap-2">
@@ -279,6 +328,12 @@ const Income = () => {
                             className="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 shadow-sm"
                         >
                             Save
+                        </button>
+                        <button
+                            onClick={() => setIsSourceManagerOpen(true)}
+                            className="inline-flex items-center px-3 py-2 bg-slate-700 text-white rounded text-sm hover:bg-slate-600 shadow-sm border border-slate-600"
+                        >
+                            Manage Sources
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
@@ -300,63 +355,73 @@ const Income = () => {
             {success && <div className="p-3 bg-green-100 text-green-700 rounded mb-4">{success}</div>}
             {error && <div className="p-3 bg-red-100 text-red-700 rounded mb-4">{error}</div>}
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-semibold text-gray-800">
+            <div className="bg-slate-900 rounded-xl shadow-sm border border-slate-800 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                    <h3 className="font-semibold text-slate-100">
                         {isSnapshotView ? 'Historical Income' : 'Income Records'}
                     </h3>
-                    <span className="font-bold text-blue-600 text-lg">
+                    <span className="font-bold text-emerald-400 text-lg">
                         ${currentTotalValue.toLocaleString()}
                     </span>
                 </div>
 
                 {loading ? (
-                    <div className="p-8 text-center text-gray-500">Loading...</div>
+                    <div className="p-8 text-center text-slate-500">Loading...</div>
                 ) : localIncomes.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500">
-                        <LuBriefcase className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                    <div className="p-12 text-center text-slate-500">
+                        <LuBriefcase className="w-12 h-12 mx-auto text-slate-600 mb-2" />
                         No income records found.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-800">
+                            <thead className="bg-slate-900/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sources/Description</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Annual Amount</th>
-                                    {!isSnapshotView && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>}
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Sources/Description</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Monthly Amount</th>
+                                    {!isSnapshotView && <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>}
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-slate-900 divide-y divide-slate-800">
                                 {localIncomes.map((item, idx) => (
-                                    <tr key={item._id || idx} className="hover:bg-gray-50">
+                                    <tr key={item._id || idx} className="hover:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4">
                                             {/* Logic for handling Source vs Description vs Name from snapshot */}
                                             {isSnapshotView ? (
                                                 <div>
-                                                    <div className="font-medium text-gray-900">{item.name}</div>
-                                                    <div className="text-xs text-gray-500">{item.description}</div>
+                                                    <div className="font-medium text-slate-200">{item.name}</div>
+                                                    <div className="text-xs text-slate-500">{item.description}</div>
                                                 </div>
                                             ) : (
                                                 <div>
                                                     {(item.incomeSources && item.incomeSources.length > 0) ? (
                                                         <div className="flex flex-wrap gap-1">
                                                             {item.incomeSources.map((s, i) => (
-                                                                <span key={i} className="px-2 py-0.5 rounded text-xs bg-gray-100">{s}</span>
+                                                                <span key={i} className="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300 border border-slate-700">{s}</span>
                                                             ))}
                                                         </div>
                                                     ) : '-'}
-                                                    {item.notes && <div className="text-xs text-gray-500 mt-1">{item.notes}</div>}
+                                                    {item.notes && <div className="text-xs text-slate-500 mt-1">{item.notes}</div>}
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right text-sm font-medium text-green-600">
+                                        <td className="px-6 py-4 text-right text-sm font-medium text-emerald-400">
                                             ${(item.currentIncome || item.value || 0).toLocaleString()}
                                         </td>
                                         {!isSnapshotView && (
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button onClick={() => handleOpenModal(item)} className="text-blue-600 hover:text-blue-900 mr-3"><LuPencil /></button>
-                                                <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-900"><LuTrash2 /></button>
+                                                <button
+                                                    onClick={() => handleOpenModal(item)}
+                                                    className="text-sky-400 hover:text-sky-300 mr-3"
+                                                    disabled={!item._id}
+                                                >
+                                                    <LuPencil />
+                                                </button>
+                                                {item._id ? (
+                                                    <button onClick={() => handleDelete(item._id)} className="text-rose-400 hover:text-rose-300"><LuTrash2 /></button>
+                                                ) : (
+                                                    <span className="text-slate-600 cursor-not-allowed"><LuTrash2 /></span>
+                                                )}
                                             </td>
                                         )}
                                     </tr>
@@ -378,20 +443,33 @@ const Income = () => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Current Annual Income ($)</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Monthly Income ($)</label>
                                     <input type="number" name="currentIncome" value={formData.currentIncome} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Sources (comma separated)</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Sources</label>
                                     <input type="text" name="incomeSources" value={formData.incomeSources} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Job, Freelance..." />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Projected Salary ($)</label>
-                                    <input type="number" name="projectedSalary" value={formData.projectedSalary} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-300">Career Goal</label>
-                                    <input type="text" name="careerGoal" value={formData.careerGoal} onChange={handleChange} className="w-full border border-gray-600 bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    {/* Saved Sources Chips */}
+                                    {currentProfile?.incomeSources?.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {[...new Set(currentProfile.incomeSources)].map(source => (
+                                                <button
+                                                    key={source}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = formData.incomeSources ? formData.incomeSources.split(',').map(s => s.trim()) : [];
+                                                        if (!current.includes(source)) {
+                                                            const newValue = current.length > 0 && current[0] !== '' ? [...current, source].join(', ') : source;
+                                                            setFormData(prev => ({ ...prev, incomeSources: newValue }));
+                                                        }
+                                                    }}
+                                                    className="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-full border border-slate-600 transition-colors"
+                                                >
+                                                    + {source}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div>
@@ -403,6 +481,47 @@ const Income = () => {
                                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage Sources Modal */}
+            {isSourceManagerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+                    <div className="bg-slate-900 border border-slate-700 text-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                            <h3 className="text-lg font-bold">Manage Sources</h3>
+                            <button onClick={() => setIsSourceManagerOpen(false)} className="text-gray-400 hover:text-white"><LuX /></button>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newSource}
+                                    onChange={(e) => setNewSource(e.target.value)}
+                                    placeholder="New Source Name..."
+                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddSource()}
+                                />
+                                <button
+                                    onClick={handleAddSource}
+                                    disabled={!newSource.trim()}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium"
+                                >
+                                    Add
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {currentProfile?.incomeSources?.length === 0 && <p className="text-slate-500 text-sm text-center py-4">No saved sources yet.</p>}
+                                {[...new Set(currentProfile?.incomeSources || [])].map(source => (
+                                    <div key={source} className="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700">
+                                        <span className="text-sm text-slate-300">{source}</span>
+                                        <button onClick={() => handleDeleteSource(source)} className="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-slate-700 rounded"><LuTrash2 /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

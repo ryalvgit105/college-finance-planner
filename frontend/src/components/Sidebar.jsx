@@ -22,7 +22,7 @@ const Sidebar = () => {
         { name: 'Assets', path: '/assets', icon: LuDollarSign },
         { name: 'Debts', path: '/debts', icon: LuCreditCard },
         { name: 'Income', path: '/income', icon: LuLandmark },
-        { name: 'Spending', path: '/spending-analysis', icon: LuBanknote },
+        { name: 'Expenses', path: '/spending-analysis', icon: LuBanknote },
         { name: 'Investments', path: '/investments', icon: LuTrendingUp },
         { name: 'Real Estate', path: '/real-estate', icon: LuBuilding },
     ];
@@ -121,7 +121,7 @@ const Sidebar = () => {
                             }
                         >
                             <LuBanknote size={18} />
-                            <span>Spending</span>
+                            <span>Expenses</span>
                         </NavLink>
 
                         {/* 3. Assets (Collapsible) */}

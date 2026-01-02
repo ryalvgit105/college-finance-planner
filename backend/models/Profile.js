@@ -32,10 +32,13 @@ const profileSchema = new mongoose.Schema({
         type: [String],
         default: ['Rent', 'Groceries', 'Utilities', 'Entertainment', 'Transport']
     },
-    budgets: {
-        type: Map,
-        of: Number,
-        default: {}
+    incomeSources: {
+        type: [String],
+        default: ['Salary', 'Bonus', 'Freelance', 'Investment', 'Other']
+    },
+    investmentAccounts: {
+        type: [String],
+        default: ['Robinhood', 'Fidelity', 'Vanguard', 'Coinbase', 'Bank']
     },
     budgets: {
         type: Map,
